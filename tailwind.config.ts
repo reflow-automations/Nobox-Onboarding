@@ -1,0 +1,60 @@
+import type { Config } from "tailwindcss";
+
+const config: Config = {
+  content: ["./src/**/*.{ts,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        "nbx-bg": "#EAECE7",
+        "nbx-bg-2": "#D5CAD0",
+        "nbx-text": "#000000",
+        "nbx-green": "#E6FB7C",
+        "nbx-purple": "#D2BBFF",
+        "nbx-yellow": "#FFE228",
+      },
+      fontFamily: {
+        cabinet: ['"Cabinet Grotesk"', "ui-sans-serif", "system-ui", "sans-serif"],
+        switzer: ['"Switzer"', "ui-sans-serif", "system-ui", "sans-serif"],
+      },
+      borderRadius: {
+        nbx: "28px",
+        "nbx-lg": "36px",
+        "nbx-xl": "44px",
+      },
+      maxWidth: {
+        form: "960px",
+      },
+      letterSpacing: {
+        kicker: "0.18em",
+      },
+      keyframes: {
+        "fade-up": {
+          "0%": { opacity: "0", transform: "translateY(12px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "fade-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        "slide-right": {
+          "0%": { transform: "translateX(-6px)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
+        },
+        breathe: {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.05)" },
+        },
+      },
+      animation: {
+        "fade-up": "fade-up 0.5s cubic-bezier(0.21, 0.61, 0.35, 1) both",
+        "fade-up-slow": "fade-up 0.7s cubic-bezier(0.21, 0.61, 0.35, 1) both",
+        "fade-in": "fade-in 0.4s ease-out both",
+        "slide-right": "slide-right 0.5s ease-out both",
+        breathe: "breathe 3s ease-in-out infinite",
+      },
+    },
+  },
+  plugins: [],
+};
+
+export default config;
