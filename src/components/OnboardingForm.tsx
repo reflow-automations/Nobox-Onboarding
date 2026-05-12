@@ -639,8 +639,8 @@ function Section2Platforms() {
       <div className="space-y-3">
         <h3 className="text-lg">Google Ads</h3>
         <p className="text-xs text-nbx-text/55">
-          Voor advertenties op Google. Wij krijgen toegang via een agency-link — je hoeft
-          geen wachtwoord te delen, alleen het e-mailadres van de accounteigenaar.
+          <strong>Wij sturen jullie een agency-link.</strong> De accounteigenaar accepteert
+          het verzoek in Google Ads → Tools → Access → Notifications. Geen wachtwoord nodig.
         </p>
         <FieldYesNo name="google_ads.has" label="Heb je een Google Ads account?" />
         {hasGAds === true && (
@@ -659,8 +659,9 @@ function Section2Platforms() {
       <div className="space-y-3">
         <h3 className="text-lg">Google Search Console</h3>
         <p className="text-xs text-nbx-text/55">
-          Voor inzicht in vindbaarheid op Google. Wij worden toegevoegd als gebruiker —
-          alleen e-mail van eigenaar nodig.
+          <strong>De eigenaar voegt <code className="bg-nbx-bg/60 px-1 rounded">marketing@noboxagency.com</code> toe</strong> via
+          Search Console → Settings → Users and permissions → Add user (Full role). Email
+          hieronder = onze verificatie.
         </p>
         <FieldYesNo name="search_console.has" label="Heb je Search Console ingericht?" />
         {hasGSC === true && (
@@ -671,8 +672,9 @@ function Section2Platforms() {
       <div className="space-y-3">
         <h3 className="text-lg">Google Analytics 4</h3>
         <p className="text-xs text-nbx-text/55">
-          Voor website-statistieken. Wij worden toegevoegd als gebruiker — alleen e-mail
-          van eigenaar + Property ID nodig.
+          <strong>De eigenaar voegt <code className="bg-nbx-bg/60 px-1 rounded">marketing@noboxagency.com</code> toe</strong> via
+          GA4 → Admin → Property access management → Add (Editor role). Email hieronder =
+          onze verificatie.
         </p>
         <FieldYesNo name="ga4.has" label="Heb je GA4?" />
         {hasGA4 === true && (
@@ -686,16 +688,15 @@ function Section2Platforms() {
       <div className="space-y-3">
         <h3 className="text-lg">Meta Business Manager</h3>
         <p className="text-xs text-nbx-text/55">
-          Voor advertenties op Facebook en Instagram. Wij worden via een agency-link
-          toegevoegd aan jullie Business Manager — geen wachtwoord nodig. We sturen onze
-          Business Manager ID apart in de welkomstmail.
+          <strong>Wij sturen onze BM-ID in de welkomstmail.</strong> Jullie BM-admin
+          accepteert via Business Settings → Partners → Add Partner. Geen wachtwoord nodig.
         </p>
         <FieldYesNo name="meta_business.has" label="Werken jullie met Meta Ads (Facebook/Instagram)?" />
         {hasMeta === true && (
           <FieldText
             name="meta_business.business_manager_id"
             label="Jullie Business Manager ID"
-            hint="Te vinden in Meta Business Suite → Instellingen → Bedrijfsinfo."
+            hint="Meta Business Suite → Instellingen → Bedrijfsinfo."
           />
         )}
       </div>
@@ -703,8 +704,9 @@ function Section2Platforms() {
       <div className="space-y-3">
         <h3 className="text-lg">LinkedIn bedrijfspagina</h3>
         <p className="text-xs text-nbx-text/55">
-          Voor organisch posten en analytics. Een huidige beheerder voegt ons toe — geen
-          wachtwoord nodig, alleen het e-mailadres.
+          <strong>Een huidige beheerder voegt <code className="bg-nbx-bg/60 px-1 rounded">marketing@noboxagency.com</code> toe</strong> als
+          Super admin in Page admin centre → Manage admins. Email hieronder = onze
+          verificatie.
         </p>
         <FieldYesNo name="linkedin.has" label="Hebben jullie een LinkedIn bedrijfspagina?" />
         {hasLI === true && (
@@ -719,8 +721,9 @@ function Section2Platforms() {
       <div className="space-y-3">
         <h3 className="text-lg">Instagram bedrijfsaccount</h3>
         <p className="text-xs text-nbx-text/55">
-          <strong>Voor Instagram hebben we wél login-toegang nodig</strong> — die deel je
-          straks veilig via de vault-link. Hier alleen e-mailadres of @handle.
+          <strong>Wachtwoord nodig</strong> — Instagram heeft geen agency/collaborator-flow.
+          Login deel je straks veilig via de vault-link. Hier alleen handle of e-mail voor
+          referentie.
         </p>
         <FieldYesNo name="instagram.has" label="Hebben jullie een Instagram zakelijk account?" />
         {hasIG === true && (
@@ -734,9 +737,9 @@ function Section2Platforms() {
       <div className="space-y-3">
         <h3 className="text-lg">Website CMS</h3>
         <p className="text-xs text-nbx-text/55">
-          Welk systeem gebruik je voor de website? In de meeste gevallen worden we toegevoegd
-          als gebruiker. Voor WordPress/Squarespace soms een login — die deel je via de
-          vault.
+          <strong>De CMS-admin voegt <code className="bg-nbx-bg/60 px-1 rounded">marketing@noboxagency.com</code> toe</strong> als
+          gebruiker (WordPress / Webflow / Squarespace collaborator-invite, Shopify staff
+          account). Email hieronder = waar de invite-link naartoe mag.
         </p>
         <FieldSelect
           name="website_cms.cms_type"
@@ -758,7 +761,7 @@ function Section2Platforms() {
           />
           <FieldText
             name="website_cms.owner_email"
-            label="E-mail voor toegang"
+            label="E-mail voor invite"
             type="email"
           />
         </div>
