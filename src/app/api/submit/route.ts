@@ -79,6 +79,7 @@ export async function POST(req: Request) {
   // Cast door: DB heeft kolommen die generated types nog niet kennen.
   const insertPayload = {
     bedrijfsnaam: data.bedrijfsnaam,
+    bedrijfsemail: data.bedrijfsemail,
     website: data.website ?? null,
     factuuradres: data.factuuradres || null,
     factuur_email: data.factuur_email ?? null,

@@ -570,6 +570,15 @@ function Section1Bedrijf() {
         autoComplete="organization"
       />
       <FieldText
+        name="bedrijfsemail"
+        label="E-mailadres bedrijf"
+        type="email"
+        placeholder="info@acme.nl"
+        required
+        autoComplete="email"
+        hint="Algemeen contactadres — hier sturen we de welkomstmail naartoe."
+      />
+      <FieldText
         name="website"
         label="Website"
         placeholder="acme.nl"

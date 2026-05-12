@@ -48,6 +48,7 @@ const fileUpload = z.object({
 export const schema = z.object({
   // Sectie 1 — Bedrijf & administratie
   bedrijfsnaam: z.string().trim().min(2, "Bedrijfsnaam is verplicht"),
+  bedrijfsemail: z.string().trim().email("Geen geldig e-mailadres"),
   website: optionalUrl,
   factuuradres: z.string().trim().optional(),
   factuur_email: optionalEmail,
@@ -110,6 +111,7 @@ export type FormData = z.infer<typeof schema>;
 
 export const defaultValues: FormData = {
   bedrijfsnaam: "",
+  bedrijfsemail: "",
   website: "",
   factuuradres: "",
   factuur_email: "",
@@ -151,7 +153,7 @@ export const defaultValues: FormData = {
 
 export const sectionFieldsByStep: ReadonlyArray<ReadonlyArray<string>> = [
   // 0 — Bedrijf & administratie
-  ["bedrijfsnaam", "website", "factuuradres", "factuur_email", "concurrenten"],
+  ["bedrijfsnaam", "bedrijfsemail", "website", "factuuradres", "factuur_email", "concurrenten"],
   // 1 — Platform-toegangen
   [
     "google_ads.has",
