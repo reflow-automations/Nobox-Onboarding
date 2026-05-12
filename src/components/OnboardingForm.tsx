@@ -9,22 +9,19 @@ import {
   defaultValues,
   sectionFieldsByStep,
   sectionTitles,
-  dienstenOptions,
   VAULT_URL,
   type FormData,
 } from "@/lib/schema";
 import { KickerDot, ArrowSlideButton, ArrowLeft } from "./ui";
 
-const STORAGE_KEY = "nbx-onboarding-draft-v2";
+const STORAGE_KEY = "nbx-onboarding-draft-v3";
 const STEPS = sectionTitles.length;
 
 const sectionSubtitles = [
-  "Even kennismaken — wie zijn jullie?",
-  "Wie is ons vaste aanspreekpunt?",
-  "Waar gaan we samen voor?",
-  "Welke marketing-platforms en tools gebruiken jullie al?",
+  "Even kennismaken — bedrijfsinfo + factuur.",
+  "Welke marketing-platforms gebruiken jullie?",
   "Hoe we straks veilig jullie wachtwoorden ontvangen.",
-  "Branding, tone-of-voice, content — alles optioneel.",
+  "Brand assets — alles optioneel, alles welkom.",
   "Een paar laatste loose ends.",
 ] as const;
 
@@ -166,12 +163,10 @@ export function OnboardingForm() {
 
             <div className="space-y-5 sm:space-y-6">
               {step === 0 && <Section1Bedrijf />}
-              {step === 1 && <Section2Contact />}
-              {step === 2 && <Section3DoelenDiensten />}
-              {step === 3 && <Section4Platforms />}
-              {step === 4 && <Section5Vault />}
-              {step === 5 && <Section6Branding />}
-              {step === 6 && <Section7Praktisch />}
+              {step === 1 && <Section2Platforms />}
+              {step === 2 && <Section3Vault />}
+              {step === 3 && <Section4Branding />}
+              {step === 4 && <Section5Praktisch />}
             </div>
           </div>
         </div>
@@ -223,6 +218,7 @@ function FieldText({
   placeholder,
   required,
   autoComplete,
+  hint,
 }: {
   name: string;
   label: string;
@@ -230,6 +226,7 @@ function FieldText({
   placeholder?: string;
   required?: boolean;
   autoComplete?: string;
+  hint?: string;
 }) {
   const {
     register,
@@ -248,6 +245,7 @@ function FieldText({
         className="nbx-input"
         {...register(name as never)}
       />
+      {hint && <p className="text-xs text-nbx-text/55 mt-1.5">{hint}</p>}
       {err && <p className="nbx-error">{err}</p>}
     </div>
   );
@@ -259,12 +257,14 @@ function FieldTextarea({
   placeholder,
   required,
   rows = 4,
+  hint,
 }: {
   name: string;
   label: string;
   placeholder?: string;
   required?: boolean;
   rows?: number;
+  hint?: string;
 }) {
   const {
     register,
@@ -282,6 +282,7 @@ function FieldTextarea({
         className="nbx-textarea"
         {...register(name as never)}
       />
+      {hint && <p className="text-xs text-nbx-text/55 mt-1.5">{hint}</p>}
       {err && <p className="nbx-error">{err}</p>}
     </div>
   );
@@ -349,62 +350,20 @@ function FieldYesNo({ name, label }: { name: string; label: string }) {
   );
 }
 
-function FieldCheckboxPills({
-  name,
-  label,
-  options,
-  required,
-}: {
-  name: string;
-  label: string;
-  options: ReadonlyArray<string>;
-  required?: boolean;
-}) {
-  const {
-    setValue,
-    watch,
-    formState: { errors },
-  } = useFormContext<FormData>();
-  const current = ((watch(name as never) as unknown as string[]) ?? []) as string[];
-  const err = getNestedError(errors as Record<string, unknown>, name);
-  const toggle = (v: string) => {
-    const nextVal = current.includes(v) ? current.filter((x) => x !== v) : [...current, v];
-    setValue(name as never, nextVal as never, { shouldValidate: true, shouldDirty: true });
-  };
-  return (
-    <div>
-      <label className="nbx-field-label">
-        {label} {required && <span className="text-red-600">*</span>}
-      </label>
-      <div className="flex flex-wrap gap-2">
-        {options.map((v) => (
-          <button
-            key={v}
-            type="button"
-            onClick={() => toggle(v)}
-            className={`nbx-check-pill ${current.includes(v) ? "nbx-check-pill-active" : ""}`}
-          >
-            {v}
-          </button>
-        ))}
-      </div>
-      {err && <p className="nbx-error">{err}</p>}
-    </div>
-  );
-}
-
 function FieldFile({
   namePrefix,
   label,
   accept,
   maxMB = 3,
   required = false,
+  hint,
 }: {
   namePrefix: string;
   label: string;
   accept: string;
   maxMB?: number;
   required?: boolean;
+  hint?: string;
 }) {
   const { setValue, watch } = useFormContext<FormData>();
   const filename = (watch(
@@ -517,12 +476,12 @@ function FieldFile({
             <div className="font-medium text-nbx-text/85">
               Klik om je document te kiezen
             </div>
-            <div className="text-xs text-nbx-text/55">
-              PDF, Word, Text — max {maxMB} MB
-            </div>
+            <div className="text-xs text-nbx-text/55">{accept}</div>
+            <div className="text-xs text-nbx-text/55">Max {maxMB} MB</div>
           </div>
         </label>
       )}
+      {hint && <p className="text-xs text-nbx-text/55 mt-1.5">{hint}</p>}
       {error && <p className="nbx-error">{error}</p>}
     </div>
   );
@@ -616,87 +575,39 @@ function Section1Bedrijf() {
         placeholder="acme.nl"
         autoComplete="url"
       />
-    </div>
-  );
-}
-
-function Section2Contact() {
-  return (
-    <div className="space-y-5">
-      <div className="grid sm:grid-cols-2 gap-5">
-        <FieldText
-          name="contactpersoon.voornaam"
-          label="Voornaam"
-          required
-          autoComplete="given-name"
-        />
-        <FieldText
-          name="contactpersoon.achternaam"
-          label="Achternaam"
-          required
-          autoComplete="family-name"
-        />
+      <div className="pt-4 border-t border-nbx-text/10">
+        <p className="nbx-field-label mb-3">Administratie</p>
+        <div className="space-y-5">
+          <FieldTextarea
+            name="factuuradres"
+            label="Factuuradres"
+            placeholder="Straatnaam 1, 1234 AB Stad"
+            rows={2}
+            hint="Vaak anders dan vestigingsadres — bijv. accountant of holding."
+          />
+          <FieldText
+            name="factuur_email"
+            label="E-mail voor facturen"
+            type="email"
+            placeholder="boekhouding@bedrijf.nl"
+            hint="Naar welk adres mogen we facturen sturen?"
+          />
+        </div>
       </div>
-      <FieldText
-        name="contactpersoon.functie"
-        label="Functie"
-        placeholder="bv. Marketing Manager"
-        required
-      />
-      <FieldText
-        name="contactpersoon.email"
-        label="E-mailadres"
-        type="email"
-        required
-        autoComplete="email"
-      />
-      <div className="grid sm:grid-cols-2 gap-5">
-        <FieldText
-          name="contactpersoon.telefoon"
-          label="Telefoonnummer"
-          type="tel"
-          autoComplete="tel"
-        />
-        <FieldText
-          name="contactpersoon.linkedin"
-          label="LinkedIn-profiel"
-          placeholder="linkedin.com/in/…"
+      <div className="pt-4 border-t border-nbx-text/10">
+        <FieldTextarea
+          name="concurrenten"
+          label="Top 3-5 concurrenten (optioneel)"
+          placeholder="één per regel, bijv. acmegroep.nl, vergelijkbaarbedrijf.com"
+          rows={3}
+          hint="Sebas heeft dit vaak al — alleen invullen als hij erom heeft gevraagd."
         />
       </div>
     </div>
   );
 }
 
-function Section3DoelenDiensten() {
-  return (
-    <div className="space-y-6">
-      <FieldCheckboxPills
-        name="diensten"
-        label="Welke diensten neem je af bij Nobox?"
-        options={dienstenOptions}
-        required
-      />
-      <FieldTextarea
-        name="doelen.hoofddoel"
-        label="Belangrijkste doel komende 6 maanden?"
-        placeholder="bv. meer leads via Google"
-        required
-      />
-      <FieldTextarea
-        name="doelen.kpis"
-        label="Specifieke KPI's of doelen?"
-        placeholder="bv. 10 leads/mnd, CPL <€50"
-      />
-      <FieldTextarea
-        name="doelen.concurrenten"
-        label="Top 3 concurrenten?"
-        placeholder="één per regel"
-      />
-    </div>
-  );
-}
-
-function Section4Platforms() {
+function Section2Platforms() {
   const { watch } = useFormContext<FormData>();
   const hasGAds = watch("google_ads.has");
   const hasGSC = watch("search_console.has");
@@ -704,15 +615,29 @@ function Section4Platforms() {
   const hasMeta = watch("meta_business.has");
   const hasLI = watch("linkedin.has");
   const hasIG = watch("instagram.has");
+
   return (
     <div className="space-y-8">
+      <div className="rounded-2xl bg-nbx-bg/60 border border-nbx-text/10 p-4 sm:p-5">
+        <p className="text-sm text-nbx-text/75 leading-relaxed">
+          <strong>Vul hier alleen e-mailadressen en account-ID&apos;s in.</strong> Voor accounts
+          waar we een wachtwoord nodig hebben (zoals Instagram), krijg je later een
+          beveiligde vault-link om die veilig te delen. Stuur nooit wachtwoorden via dit
+          formulier of per mail.
+        </p>
+      </div>
+
       <div className="space-y-3">
         <h3 className="text-lg">Google Ads</h3>
+        <p className="text-xs text-nbx-text/55">
+          Voor advertenties op Google. Wij krijgen toegang via een agency-link — je hoeft
+          geen wachtwoord te delen, alleen het e-mailadres van de accounteigenaar.
+        </p>
         <FieldYesNo name="google_ads.has" label="Heb je een Google Ads account?" />
         {hasGAds === true && (
           <div className="grid sm:grid-cols-2 gap-5 pt-1">
             <FieldText name="google_ads.customer_id" label="Customer ID (10-cijferig)" />
-            <FieldText name="google_ads.owner_email" label="E-mail van eigenaar" type="email" />
+            <FieldText name="google_ads.owner_email" label="E-mail eigenaar" type="email" />
           </div>
         )}
         {hasGAds === false && (
@@ -724,38 +649,59 @@ function Section4Platforms() {
 
       <div className="space-y-3">
         <h3 className="text-lg">Google Search Console</h3>
+        <p className="text-xs text-nbx-text/55">
+          Voor inzicht in vindbaarheid op Google. Wij worden toegevoegd als gebruiker —
+          alleen e-mail van eigenaar nodig.
+        </p>
         <FieldYesNo name="search_console.has" label="Heb je Search Console ingericht?" />
         {hasGSC === true && (
-          <FieldText name="search_console.owner_email" label="E-mail van eigenaar" type="email" />
+          <FieldText name="search_console.owner_email" label="E-mail eigenaar" type="email" />
         )}
       </div>
 
       <div className="space-y-3">
         <h3 className="text-lg">Google Analytics 4</h3>
+        <p className="text-xs text-nbx-text/55">
+          Voor website-statistieken. Wij worden toegevoegd als gebruiker — alleen e-mail
+          van eigenaar + Property ID nodig.
+        </p>
         <FieldYesNo name="ga4.has" label="Heb je GA4?" />
         {hasGA4 === true && (
           <div className="grid sm:grid-cols-2 gap-5">
             <FieldText name="ga4.property_id" label="Property ID" />
-            <FieldText name="ga4.owner_email" label="E-mail van eigenaar" type="email" />
+            <FieldText name="ga4.owner_email" label="E-mail eigenaar" type="email" />
           </div>
         )}
       </div>
 
       <div className="space-y-3">
         <h3 className="text-lg">Meta Business Manager</h3>
-        <FieldYesNo name="meta_business.has" label="Werken jullie met Meta Ads?" />
+        <p className="text-xs text-nbx-text/55">
+          Voor advertenties op Facebook en Instagram. Wij worden via een agency-link
+          toegevoegd aan jullie Business Manager — geen wachtwoord nodig. We sturen onze
+          Business Manager ID apart in de welkomstmail.
+        </p>
+        <FieldYesNo name="meta_business.has" label="Werken jullie met Meta Ads (Facebook/Instagram)?" />
         {hasMeta === true && (
-          <FieldText name="meta_business.business_manager_id" label="Business Manager ID" />
+          <FieldText
+            name="meta_business.business_manager_id"
+            label="Jullie Business Manager ID"
+            hint="Te vinden in Meta Business Suite → Instellingen → Bedrijfsinfo."
+          />
         )}
       </div>
 
       <div className="space-y-3">
         <h3 className="text-lg">LinkedIn bedrijfspagina</h3>
+        <p className="text-xs text-nbx-text/55">
+          Voor organisch posten en analytics. Een huidige beheerder voegt ons toe — geen
+          wachtwoord nodig, alleen het e-mailadres.
+        </p>
         <FieldYesNo name="linkedin.has" label="Hebben jullie een LinkedIn bedrijfspagina?" />
         {hasLI === true && (
           <FieldText
             name="linkedin.owner_email"
-            label="E-mail van de paginabeheerder"
+            label="E-mail van een beheerder"
             type="email"
           />
         )}
@@ -763,20 +709,29 @@ function Section4Platforms() {
 
       <div className="space-y-3">
         <h3 className="text-lg">Instagram bedrijfsaccount</h3>
+        <p className="text-xs text-nbx-text/55">
+          <strong>Voor Instagram hebben we wél login-toegang nodig</strong> — die deel je
+          straks veilig via de vault-link. Hier alleen e-mailadres of @handle.
+        </p>
         <FieldYesNo name="instagram.has" label="Hebben jullie een Instagram zakelijk account?" />
         {hasIG === true && (
           <FieldText
             name="instagram.owner_email_or_handle"
-            label="E-mail of @gebruikersnaam"
+            label="E-mailadres of @gebruikersnaam"
           />
         )}
       </div>
 
       <div className="space-y-3">
         <h3 className="text-lg">Website CMS</h3>
+        <p className="text-xs text-nbx-text/55">
+          Welk systeem gebruik je voor de website? In de meeste gevallen worden we toegevoegd
+          als gebruiker. Voor WordPress/Squarespace soms een login — die deel je via de
+          vault.
+        </p>
         <FieldSelect
           name="website_cms.cms_type"
-          label="Welk CMS gebruiken jullie?"
+          label="Welk CMS?"
           options={[
             { value: "WordPress", label: "WordPress" },
             { value: "Squarespace", label: "Squarespace" },
@@ -802,20 +757,14 @@ function Section4Platforms() {
 
       <FieldTextarea
         name="overige_platforms"
-        label="Overige platformen waar we toegang nodig hebben?"
+        label="Overige platformen? (optioneel)"
         placeholder="bv. TikTok Ads, Pinterest, etc."
-      />
-
-      <FieldTextarea
-        name="internal_tools"
-        label="Welke tools gebruiken jullie intern? (geen toegang nodig)"
-        placeholder="bv. HubSpot (CRM), Mailchimp, Slack, Notion — laat ons weten welk ecosystem jullie gebruiken"
       />
     </div>
   );
 }
 
-function Section5Vault() {
+function Section3Vault() {
   return (
     <div className="space-y-5">
       <div className="rounded-2xl bg-nbx-bg/60 border border-nbx-text/10 p-5 sm:p-6 flex gap-4">
@@ -834,7 +783,8 @@ function Section5Vault() {
           <h3 className="text-base sm:text-lg mb-2">Hier hoef je niks in te vullen.</h3>
           <p className="text-sm text-nbx-text/75 leading-relaxed mb-3">
             Voor wachtwoorden en logins gebruiken we een beveiligde vault — dit
-            formulier is niet de plek om die te delen.
+            formulier is niet de plek om die te delen. Je krijgt de vault-link in onze
+            welkomstmail nadat je het formulier verstuurt.
           </p>
           <p className="text-sm">
             <a
@@ -847,16 +797,6 @@ function Section5Vault() {
             </a>
           </p>
           <p className="text-xs text-nbx-text/55 mt-3">
-            Geen toegang?{" "}
-            <a
-              href="mailto:onboarding@noboxagency.com"
-              className="underline hover:text-nbx-text"
-            >
-              Mail onboarding@noboxagency.com
-            </a>{" "}
-            — we sturen 'm binnen 1 werkdag.
-          </p>
-          <p className="text-xs text-nbx-text/55 mt-3">
             <b>Stuur nooit wachtwoorden via dit form of per mail.</b>
           </p>
         </div>
@@ -865,20 +805,29 @@ function Section5Vault() {
   );
 }
 
-function Section6Branding() {
+function Section4Branding() {
   return (
     <div className="space-y-6">
       <FieldFile
+        namePrefix="logo"
+        label="Logo (vector!)"
+        accept=".svg,.eps,.ai,.pdf,.png,image/svg+xml,application/postscript,application/pdf,image/png"
+        maxMB={5}
+        hint="Liefst SVG of EPS (vector). PNG mag ook, maar dan groot formaat."
+      />
+      <FieldFile
         namePrefix="branding"
         label="Brand-document / huisstijl (optioneel)"
-        accept=".pdf,.doc,.docx,.txt,.md,.rtf,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
-        maxMB={3}
+        accept=".pdf,.doc,.docx,.txt,.md,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+        maxMB={5}
+        hint="Brand guide, huisstijl-document — als je 'm hebt."
       />
       <FieldFile
         namePrefix="pitch_deck"
         label="Pitch deck / sales-presentatie (optioneel)"
         accept=".pdf,.ppt,.pptx,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
-        maxMB={5}
+        maxMB={10}
+        hint="Helpt ons jullie verhaal beter te begrijpen."
       />
       <div className="grid sm:grid-cols-2 gap-5">
         <FieldText
@@ -886,21 +835,12 @@ function Section6Branding() {
           label="Primaire merkkleur (optioneel)"
           placeholder="#E6FB7C"
         />
-        <FieldSelect
-          name="tone_of_voice"
-          label="Tone of voice (optioneel)"
-          options={[
-            { value: "formeel", label: "Formeel" },
-            { value: "informeel", label: "Informeel" },
-            { value: "mix", label: "Mix" },
-          ]}
+        <FieldText
+          name="foto_video_drive_link"
+          label="Drive-link foto/video (optioneel)"
+          placeholder="drive.google.com/…"
         />
       </div>
-      <FieldText
-        name="foto_video_drive_link"
-        label="Drive-link foto/video-materiaal (optioneel)"
-        placeholder="drive.google.com/…"
-      />
       <FieldTextarea
         name="klantcases_text"
         label="Klantcases / referenties (optioneel)"
@@ -910,7 +850,7 @@ function Section6Branding() {
       <FieldTextarea
         name="contentstrategie_text"
         label="Bestaande contentstrategie (optioneel)"
-        placeholder="Hebben jullie al een contentstrategie? Plak hier of geef link naar document."
+        placeholder="Heb je al een contentstrategie? Plak hier of geef link naar document."
         rows={3}
       />
       <FieldTextarea
@@ -923,7 +863,7 @@ function Section6Branding() {
   );
 }
 
-function Section7Praktisch() {
+function Section5Praktisch() {
   return (
     <div className="space-y-5">
       <FieldSelect

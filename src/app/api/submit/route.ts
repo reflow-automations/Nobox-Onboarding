@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 type UploadField = {
-  formField: "branding" | "pitch_deck";
+  formField: "logo" | "branding" | "pitch_deck";
   pathField: string;
   filenameField: string;
   sizeField: string;
@@ -15,6 +15,13 @@ type UploadField = {
 };
 
 const UPLOAD_FIELDS: UploadField[] = [
+  {
+    formField: "logo",
+    pathField: "logo_path",
+    filenameField: "logo_filename",
+    sizeField: "logo_size",
+    mimeField: "logo_mime",
+  },
   {
     formField: "branding",
     pathField: "brand_document_path",
@@ -68,15 +75,14 @@ export async function POST(req: Request) {
     );
   }
 
-  // 1. Insert intake row (reference_id + id auto-generated).
-  // Cast door: DB heeft kolommen die generated types nog niet kennen (linkedin/instagram/website_cms/internal_tools/etc.).
+  // 1. Insert intake row.
+  // Cast door: DB heeft kolommen die generated types nog niet kennen.
   const insertPayload = {
     bedrijfsnaam: data.bedrijfsnaam,
     website: data.website ?? null,
-    contactpersoon: data.contactpersoon,
-    contactpersonen: [data.contactpersoon],
-    diensten: data.diensten,
-    doelen: data.doelen,
+    factuuradres: data.factuuradres || null,
+    factuur_email: data.factuur_email ?? null,
+    concurrenten: data.concurrenten || null,
     google_ads: data.google_ads,
     search_console: data.search_console,
     ga4: data.ga4,
@@ -85,10 +91,8 @@ export async function POST(req: Request) {
     instagram: data.instagram,
     website_cms: data.website_cms,
     overige_platforms: data.overige_platforms || null,
-    internal_tools: data.internal_tools || null,
     brand_notes: data.branding?.notes || null,
     brand_color_hex: data.brand_color_hex || null,
-    tone_of_voice: data.tone_of_voice ? data.tone_of_voice : null,
     foto_video_drive_link: data.foto_video_drive_link ?? null,
     klantcases_text: data.klantcases_text || null,
     contentstrategie_text: data.contentstrategie_text || null,
@@ -110,7 +114,7 @@ export async function POST(req: Request) {
     );
   }
 
-  // 2. Upload files (brand_document + pitch_deck)
+  // 2. Upload files (logo + brand_document + pitch_deck) — all routed to Drive later by n8n
   for (const u of UPLOAD_FIELDS) {
     const upload = data[u.formField] as
       | {

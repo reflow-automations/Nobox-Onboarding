@@ -38,43 +38,22 @@ const optionalHex = z
     "Geldig hex-formaat: #E6FB7C of #000"
   );
 
+const fileUpload = z.object({
+  document_filename: z.string().optional(),
+  document_data: z.string().optional(),
+  document_size: z.number().optional(),
+  document_mime: z.string().optional(),
+});
+
 export const schema = z.object({
-  // Sectie 1 — Bedrijf (kvk + adres geschrapt, staan in offerte)
+  // Sectie 1 — Bedrijf & administratie
   bedrijfsnaam: z.string().trim().min(2, "Bedrijfsnaam is verplicht"),
   website: optionalUrl,
+  factuuradres: z.string().trim().optional(),
+  factuur_email: optionalEmail,
+  concurrenten: z.string().trim().optional(),
 
-  // Sectie 2 — Contactpersoon (singular voor v2; admin kan extra contacten toevoegen in dashboard)
-  contactpersoon: z.object({
-    voornaam: z.string().trim().min(1, "Voornaam is verplicht"),
-    achternaam: z.string().trim().min(1, "Achternaam is verplicht"),
-    functie: z.string().trim().min(1, "Functie is verplicht"),
-    email: z.string().trim().email("Geen geldig e-mailadres"),
-    telefoon: z.string().trim().optional(),
-    linkedin: optionalUrl,
-  }),
-
-  // Sectie 3 — Doelen + diensten
-  diensten: z
-    .array(
-      z.enum([
-        "SEO",
-        "SEA",
-        "Content",
-        "Social",
-        "Web",
-        "Branding",
-        "Strategie",
-        "Anders",
-      ])
-    )
-    .min(1, "Kies minstens één dienst"),
-  doelen: z.object({
-    hoofddoel: z.string().trim().min(10, "Schrijf minstens één zin (10+ tekens)"),
-    kpis: z.string().trim().optional(),
-    concurrenten: z.string().trim().optional(),
-  }),
-
-  // Sectie 4 — Platform-toegangen
+  // Sectie 2 — Platform-toegangen
   google_ads: z.object({
     has: z.boolean(),
     customer_id: z.string().trim().optional(),
@@ -109,32 +88,20 @@ export const schema = z.object({
   }),
   overige_platforms: z.string().trim().optional(),
 
-  // Sectie 4b — Interne tools (context, geen toegang)
-  internal_tools: z.string().trim().optional(),
+  // Sectie 3 — Vault info-only (geen velden)
 
-  // Sectie 5 — Vault info-only (geen velden)
-
-  // Sectie 6 — Branding & content
-  branding: z.object({
-    document_filename: z.string().optional(),
-    document_data: z.string().optional(),
-    document_size: z.number().optional(),
-    document_mime: z.string().optional(),
+  // Sectie 4 — Branding & content
+  logo: fileUpload,
+  branding: fileUpload.extend({
     notes: z.string().trim().optional(),
   }),
-  pitch_deck: z.object({
-    document_filename: z.string().optional(),
-    document_data: z.string().optional(),
-    document_size: z.number().optional(),
-    document_mime: z.string().optional(),
-  }),
+  pitch_deck: fileUpload,
   brand_color_hex: optionalHex,
-  tone_of_voice: z.enum(["formeel", "informeel", "mix", ""]).optional(),
   foto_video_drive_link: optionalUrl,
   klantcases_text: z.string().trim().optional(),
   contentstrategie_text: z.string().trim().optional(),
 
-  // Sectie 7 — Praktisch (gewenste_startdatum geschrapt, in offerte)
+  // Sectie 5 — Praktisch
   voorkeur_vergader_tijd: z.enum(["ochtend", "middag", "avond", "flexibel"]),
   bijzonderheden: z.string().trim().optional(),
 });
@@ -144,16 +111,9 @@ export type FormData = z.infer<typeof schema>;
 export const defaultValues: FormData = {
   bedrijfsnaam: "",
   website: "",
-  contactpersoon: {
-    voornaam: "",
-    achternaam: "",
-    functie: "",
-    email: "",
-    telefoon: "",
-    linkedin: "",
-  },
-  diensten: [],
-  doelen: { hoofddoel: "", kpis: "", concurrenten: "" },
+  factuuradres: "",
+  factuur_email: "",
+  concurrenten: "",
   google_ads: { has: false, customer_id: "", owner_email: "", wil_opzetten: false },
   search_console: { has: false, owner_email: "" },
   ga4: { has: false, property_id: "", owner_email: "" },
@@ -162,7 +122,12 @@ export const defaultValues: FormData = {
   instagram: { has: false, owner_email_or_handle: "" },
   website_cms: { cms_type: "", cms_other: "", owner_email: "" },
   overige_platforms: "",
-  internal_tools: "",
+  logo: {
+    document_filename: "",
+    document_data: "",
+    document_size: 0,
+    document_mime: "",
+  },
   branding: {
     document_filename: "",
     document_data: "",
@@ -177,7 +142,6 @@ export const defaultValues: FormData = {
     document_mime: "",
   },
   brand_color_hex: "",
-  tone_of_voice: "",
   foto_video_drive_link: "",
   klantcases_text: "",
   contentstrategie_text: "",
@@ -186,20 +150,9 @@ export const defaultValues: FormData = {
 };
 
 export const sectionFieldsByStep: ReadonlyArray<ReadonlyArray<string>> = [
-  // 0 — Bedrijf
-  ["bedrijfsnaam", "website"],
-  // 1 — Contactpersoon
-  [
-    "contactpersoon.voornaam",
-    "contactpersoon.achternaam",
-    "contactpersoon.functie",
-    "contactpersoon.email",
-    "contactpersoon.telefoon",
-    "contactpersoon.linkedin",
-  ],
-  // 2 — Doelen & diensten
-  ["diensten", "doelen.hoofddoel", "doelen.kpis", "doelen.concurrenten"],
-  // 3 — Platforms + interne tools
+  // 0 — Bedrijf & administratie
+  ["bedrijfsnaam", "website", "factuuradres", "factuur_email", "concurrenten"],
+  // 1 — Platform-toegangen
   [
     "google_ads.has",
     "google_ads.customer_id",
@@ -220,47 +173,34 @@ export const sectionFieldsByStep: ReadonlyArray<ReadonlyArray<string>> = [
     "website_cms.cms_other",
     "website_cms.owner_email",
     "overige_platforms",
-    "internal_tools",
   ],
-  // 4 — Vault info-block (no fields)
+  // 2 — Vault info-block (no fields)
   [],
-  // 5 — Branding & content
+  // 3 — Branding & content
   [
+    "logo.document_filename",
+    "logo.document_data",
     "branding.document_filename",
     "branding.document_data",
     "branding.notes",
     "pitch_deck.document_filename",
     "pitch_deck.document_data",
     "brand_color_hex",
-    "tone_of_voice",
     "foto_video_drive_link",
     "klantcases_text",
     "contentstrategie_text",
   ],
-  // 6 — Praktisch
+  // 4 — Praktisch
   ["voorkeur_vergader_tijd", "bijzonderheden"],
 ];
 
 export const sectionTitles = [
   "Jullie bedrijf",
-  "Contactpersoon",
-  "Doelen & diensten",
   "Platform-toegangen",
   "Wachtwoorden & logins",
   "Branding & content",
   "Praktisch",
 ] as const;
 
-export const dienstenOptions = [
-  "SEO",
-  "SEA",
-  "Content",
-  "Social",
-  "Web",
-  "Branding",
-  "Strategie",
-  "Anders",
-] as const;
-
-// Centrale vault-URL — vervang door echte Bitwarden Send / 1Password share-pagina URL wanneer Sebas die heeft.
+// Centrale vault-URL — Bitwarden Send link (Sebas regelt, voor nu placeholder).
 export const VAULT_URL = "https://noboxagency.com/vault";
