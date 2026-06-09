@@ -2,15 +2,18 @@ import type { Config } from "tailwindcss";
 
 const config: Config = {
   content: ["./src/**/*.{ts,tsx}"],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        "nbx-bg": "#EAECE7",
-        "nbx-bg-2": "#D5CAD0",
-        "nbx-text": "#000000",
-        "nbx-green": "#E6FB7C",
-        "nbx-purple": "#D2BBFF",
-        "nbx-yellow": "#FFE228",
+        "nbx-bg": "rgb(var(--nbx-bg) / <alpha-value>)",
+        "nbx-bg-2": "rgb(var(--nbx-bg-2) / <alpha-value>)",
+        "nbx-text": "rgb(var(--nbx-text) / <alpha-value>)",
+        "nbx-surface": "rgb(var(--nbx-surface) / <alpha-value>)",
+        "nbx-ink": "rgb(var(--nbx-ink) / <alpha-value>)",
+        "nbx-green": "rgb(var(--nbx-green) / <alpha-value>)",
+        "nbx-purple": "rgb(var(--nbx-purple) / <alpha-value>)",
+        "nbx-yellow": "rgb(var(--nbx-yellow) / <alpha-value>)",
       },
       fontFamily: {
         cabinet: ['"Cabinet Grotesk"', "ui-sans-serif", "system-ui", "sans-serif"],

@@ -12,7 +12,7 @@ export default function HomePage() {
           width={1240}
           height={541}
           priority
-          className="w-28 sm:w-36 lg:w-44 h-auto"
+          className="w-28 sm:w-36 lg:w-44 h-auto dark:brightness-0 dark:invert"
         />
         <div className="nbx-chip-light">
           <span className="w-1.5 h-1.5 rounded-full bg-nbx-green" />

@@ -12,10 +12,10 @@ export default function SuccessPage() {
           width={1240}
           height={541}
           priority
-          className="w-28 sm:w-36 lg:w-44 h-auto"
+          className="w-28 sm:w-36 lg:w-44 h-auto dark:brightness-0 dark:invert"
         />
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-nbx-green text-nbx-text text-[11px] uppercase tracking-kicker font-medium">
-          <span className="w-1.5 h-1.5 rounded-full bg-nbx-text animate-breathe" />
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-nbx-green text-nbx-ink text-[11px] uppercase tracking-kicker font-medium">
+          <span className="w-1.5 h-1.5 rounded-full bg-nbx-ink animate-breathe" />
           Ontvangen
         </div>
       </header>

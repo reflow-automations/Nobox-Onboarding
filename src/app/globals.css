@@ -2,13 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: light;
+  --nbx-bg: 234 236 231;
+  --nbx-bg-2: 213 202 208;
+  --nbx-text: 0 0 0;
+  --nbx-surface: 255 255 255;
+  --nbx-ink: 17 18 16;
+  --nbx-green: 230 251 124;
+  --nbx-purple: 210 187 255;
+  --nbx-yellow: 255 226 40;
+}
+
+.dark {
+  color-scheme: dark;
+  --nbx-bg: 18 19 17;
+  --nbx-bg-2: 40 37 43;
+  --nbx-text: 237 238 233;
+  --nbx-surface: 31 33 30;
+  --nbx-ink: 17 18 16;
+  --nbx-green: 230 251 124;
+  --nbx-purple: 210 187 255;
+  --nbx-yellow: 255 226 40;
+}
+
 @layer base {
   html {
     font-family: "Switzer", ui-sans-serif, system-ui, sans-serif;
     font-weight: 300;
     line-height: 1.4;
-    color: theme("colors.nbx-text");
-    background-color: theme("colors.nbx-bg");
+    color: rgb(var(--nbx-text));
+    background-color: rgb(var(--nbx-bg));
   }
 
   body {
@@ -38,6 +62,18 @@
     z-index: 1;
   }
 
+  .dark body {
+    background-image:
+      radial-gradient(ellipse 60% 40% at 15% 8%, rgba(230, 251, 124, 0.10), transparent 60%),
+      radial-gradient(ellipse 50% 35% at 90% 90%, rgba(210, 187, 255, 0.10), transparent 65%),
+      radial-gradient(ellipse 40% 30% at 100% 20%, rgba(255, 226, 40, 0.06), transparent 60%);
+  }
+
+  .dark body::before {
+    opacity: 0.4;
+    mix-blend-mode: screen;
+  }
+
   h1, h2 {
     font-family: "Cabinet Grotesk", ui-sans-serif, system-ui, sans-serif;
   }
@@ -63,8 +99,8 @@
   }
 
   ::selection {
-    background: theme("colors.nbx-green");
-    color: theme("colors.nbx-text");
+    background: rgb(var(--nbx-green));
+    color: rgb(var(--nbx-ink));
   }
 }
 
@@ -80,12 +116,12 @@
 
   .nbx-chip-light {
     @apply inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full
-           bg-white/70 backdrop-blur-sm border border-nbx-text/10
+           bg-nbx-surface/70 backdrop-blur-sm border border-nbx-text/10
            text-[11px] uppercase tracking-kicker font-medium text-nbx-text/70;
   }
 
   .nbx-card {
-    @apply relative bg-white/85 backdrop-blur-sm rounded-nbx-lg
+    @apply relative bg-nbx-surface/85 backdrop-blur-sm rounded-nbx-lg
            p-6 sm:p-10 lg:p-12
            border border-nbx-text/[0.06]
            shadow-[0_1px_2px_rgba(0,0,0,0.04),0_24px_48px_-24px_rgba(0,0,0,0.18)];
@@ -96,7 +132,7 @@
   }
 
   .nbx-input {
-    @apply w-full px-4 py-3.5 rounded-2xl border border-nbx-text/15 bg-white
+    @apply w-full px-4 py-3.5 rounded-2xl border border-nbx-text/15 bg-nbx-surface
            text-nbx-text placeholder:text-nbx-text/35
            focus:outline-none focus:ring-2 focus:ring-nbx-green focus:border-nbx-text/30
            transition;
@@ -113,7 +149,7 @@
   .nbx-btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full
            bg-nbx-text text-nbx-bg font-medium tracking-tight
-           hover:bg-nbx-green hover:text-nbx-text
+           hover:bg-nbx-green hover:text-nbx-ink
            transition-all duration-200
            hover:-translate-y-0.5
            shadow-[0_4px_16px_-4px_rgba(0,0,0,0.25)]
@@ -124,7 +160,7 @@
 
   .nbx-btn-primary-green {
     @apply inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full
-           bg-nbx-green text-nbx-text font-medium tracking-tight
+           bg-nbx-green text-nbx-ink font-medium tracking-tight
            hover:bg-nbx-text hover:text-nbx-bg
            transition-all duration-200
            hover:-translate-y-0.5
@@ -144,8 +180,8 @@
 
   .nbx-check-pill {
     @apply inline-flex items-center gap-2 px-4 py-2.5 rounded-full
-           border border-nbx-text/15 bg-white/70 cursor-pointer
-           hover:border-nbx-text/30 hover:bg-white
+           border border-nbx-text/15 bg-nbx-surface/70 cursor-pointer
+           hover:border-nbx-text/30 hover:bg-nbx-surface
            transition select-none text-sm;
   }
 
@@ -181,11 +217,11 @@
 
   .nbx-file-drop {
     @apply rounded-2xl border border-dashed border-nbx-text/25
-           bg-white/40 p-5 sm:p-6 transition;
+           bg-nbx-surface/40 p-5 sm:p-6 transition;
   }
 
   .nbx-file-drop:hover {
-    @apply border-nbx-text/40 bg-white/70;
+    @apply border-nbx-text/40 bg-nbx-surface/70;
   }
 
   .nbx-file-drop-filled {
@@ -230,7 +266,7 @@
 
 @layer utilities {
   .text-stroke-black {
-    -webkit-text-stroke: 1.5px theme("colors.nbx-text");
+    -webkit-text-stroke: 1.5px rgb(var(--nbx-text));
     color: transparent;
   }
 }
