@@ -118,3 +118,42 @@ export function ArrowLeft() {
     </svg>
   );
 }
+
+export function InfoDropdown({
+  title,
+  children,
+  className = "",
+}: {
+  title: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <details
+      className={`group rounded-xl border border-nbx-text/10 bg-nbx-bg/60 ${className}`}
+    >
+      <summary className="flex cursor-pointer select-none items-center justify-between gap-3 px-4 py-2.5 text-sm font-medium text-nbx-text/80 transition-colors hover:text-nbx-text list-none [&::-webkit-details-marker]:hidden">
+        <span>{title}</span>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          aria-hidden
+          className="flex-shrink-0 text-nbx-text/45 transition-transform duration-200 group-open:rotate-180"
+        >
+          <path
+            d="M4 6L8 10L12 6"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </summary>
+      <div className="px-4 pb-4 pt-0.5 text-sm leading-relaxed text-nbx-text/70">
+        {children}
+      </div>
+    </details>
+  );
+}

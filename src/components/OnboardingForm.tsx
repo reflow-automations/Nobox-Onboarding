@@ -9,10 +9,16 @@ import {
   defaultValues,
   sectionFieldsByStep,
   sectionTitles,
-  VAULT_URL,
+  ONETIMESECRET_URL,
   type FormData,
 } from "@/lib/schema";
-import { KickerDot, ArrowSlideButton, ArrowLeft } from "./ui";
+import {
+  KickerDot,
+  ArrowSlideButton,
+  ArrowSlideLink,
+  ArrowLeft,
+  InfoDropdown,
+} from "./ui";
 
 const STORAGE_KEY = "nbx-onboarding-draft-v3";
 const STEPS = sectionTitles.length;
@@ -20,7 +26,7 @@ const STEPS = sectionTitles.length;
 const sectionSubtitles = [
   "Even kennismaken — bedrijfsinfo + factuur.",
   "Welke marketing-platforms gebruiken jullie?",
-  "Hoe we straks veilig jullie wachtwoorden ontvangen.",
+  "Hoe je ons straks veilig toegang geeft.",
   "Brand assets — alles optioneel, alles welkom.",
   "Een paar laatste loose ends.",
 ] as const;
@@ -606,10 +612,10 @@ function Section1Bedrijf() {
       <div className="pt-4 border-t border-nbx-text/10">
         <FieldTextarea
           name="concurrenten"
-          label="Top 3-5 concurrenten (optioneel)"
-          placeholder="één per regel, bijv. acmegroep.nl, vergelijkbaarbedrijf.com"
-          rows={3}
-          hint="Sebas heeft dit vaak al — alleen invullen als hij erom heeft gevraagd."
+          label="Concurrenten (optioneel)"
+          placeholder={"Eén URL per regel, bijv.\nacmegroep.nl\nvergelijkbaarbedrijf.nl"}
+          rows={4}
+          hint="Plak de websites van je belangrijkste concurrenten, één URL per regel. Sebas heeft dit vaak al; alleen invullen als hij erom vraagt."
         />
       </div>
     </div>
@@ -629,19 +635,34 @@ function Section2Platforms() {
     <div className="space-y-8">
       <div className="rounded-2xl bg-nbx-bg/60 border border-nbx-text/10 p-4 sm:p-5">
         <p className="text-sm text-nbx-text/75 leading-relaxed">
-          <strong>Vul hier alleen e-mailadressen en account-ID&apos;s in.</strong> Voor accounts
-          waar we een wachtwoord nodig hebben (zoals Instagram), krijg je later een
-          beveiligde vault-link om die veilig te delen. Stuur nooit wachtwoorden via dit
-          formulier of per mail.
+          <strong>Vul hier alleen e-mailadressen en account-ID&apos;s in.</strong> Voor de
+          meeste platforms geef je ons toegang zonder wachtwoord: je voegt{" "}
+          <code className="bg-nbx-bg/60 px-1 rounded">marketing@noboxagency.com</code> toe
+          als gebruiker. Per platform staat hieronder hoe. Accounts zonder zo&apos;n
+          uitnodig-optie (zoals Instagram) deel je veilig via onetimesecret, zie de
+          volgende stap. Stuur nooit wachtwoorden via dit formulier of per gewone mail.
         </p>
       </div>
 
       <div className="space-y-3">
         <h3 className="text-lg">Google Ads</h3>
         <p className="text-xs text-nbx-text/55">
-          <strong>Wij sturen jullie een agency-link.</strong> De accounteigenaar accepteert
-          het verzoek in Google Ads → Tools → Access → Notifications. Geen wachtwoord nodig.
+          Geen wachtwoord nodig: wij sturen een koppelverzoek, jij accepteert het.
         </p>
+        <InfoDropdown title="Hoe accepteer ik het koppelverzoek?">
+          <ol className="list-decimal pl-4 space-y-1">
+            <li>Wij sturen een agency-koppelverzoek naar jullie account.</li>
+            <li>
+              De accounteigenaar opent Google Ads en gaat naar Tools (sleutel-icoon) →
+              Toegang en beveiliging, of de melding bovenin.
+            </li>
+            <li>Accepteer het verzoek van Nobox. Klaar, geen wachtwoord nodig.</li>
+          </ol>
+          <p className="mt-2 text-nbx-text/55">
+            Vul hieronder je Customer ID + e-mail van de eigenaar in, dan weten we waar we
+            het verzoek heen sturen.
+          </p>
+        </InfoDropdown>
         <FieldYesNo name="google_ads.has" label="Heb je een Google Ads account?" />
         {hasGAds === true && (
           <div className="grid sm:grid-cols-2 gap-5 pt-1">
@@ -659,10 +680,20 @@ function Section2Platforms() {
       <div className="space-y-3">
         <h3 className="text-lg">Google Search Console</h3>
         <p className="text-xs text-nbx-text/55">
-          <strong>De eigenaar voegt <code className="bg-nbx-bg/60 px-1 rounded">marketing@noboxagency.com</code> toe</strong> via
-          Search Console → Settings → Users and permissions → Add user (Full role). Email
-          hieronder = onze verificatie.
+          Geen wachtwoord nodig: voeg ons toe als gebruiker. De e-mail hieronder gebruiken
+          we ter verificatie.
         </p>
+        <InfoDropdown title="Hoe voeg ik marketing@noboxagency.com toe?">
+          <ol className="list-decimal pl-4 space-y-1">
+            <li>Open Google Search Console.</li>
+            <li>Ga naar Instellingen → Gebruikers en machtigingen.</li>
+            <li>
+              Klik &quot;Gebruiker toevoegen&quot; en vul{" "}
+              <code className="bg-nbx-bg/60 px-1 rounded">marketing@noboxagency.com</code> in.
+            </li>
+            <li>Kies rol &quot;Volledig&quot; (Full) en bevestig.</li>
+          </ol>
+        </InfoDropdown>
         <FieldYesNo name="search_console.has" label="Heb je Search Console ingericht?" />
         {hasGSC === true && (
           <FieldText name="search_console.owner_email" label="E-mail eigenaar" type="email" />
@@ -672,10 +703,20 @@ function Section2Platforms() {
       <div className="space-y-3">
         <h3 className="text-lg">Google Analytics 4</h3>
         <p className="text-xs text-nbx-text/55">
-          <strong>De eigenaar voegt <code className="bg-nbx-bg/60 px-1 rounded">marketing@noboxagency.com</code> toe</strong> via
-          GA4 → Admin → Property access management → Add (Editor role). Email hieronder =
-          onze verificatie.
+          Geen wachtwoord nodig: voeg ons toe als gebruiker. De e-mail hieronder gebruiken
+          we ter verificatie.
         </p>
+        <InfoDropdown title="Hoe voeg ik marketing@noboxagency.com toe?">
+          <ol className="list-decimal pl-4 space-y-1">
+            <li>Open Google Analytics (GA4).</li>
+            <li>Ga naar Beheer (tandwiel linksonder) → Toegangsbeheer voor property.</li>
+            <li>
+              Klik &quot;+&quot; → &quot;Gebruikers toevoegen&quot; en vul{" "}
+              <code className="bg-nbx-bg/60 px-1 rounded">marketing@noboxagency.com</code> in.
+            </li>
+            <li>Kies rol &quot;Bewerker&quot; (Editor) en bevestig.</li>
+          </ol>
+        </InfoDropdown>
         <FieldYesNo name="ga4.has" label="Heb je GA4?" />
         {hasGA4 === true && (
           <div className="grid sm:grid-cols-2 gap-5">
@@ -688,9 +729,20 @@ function Section2Platforms() {
       <div className="space-y-3">
         <h3 className="text-lg">Meta Business Manager</h3>
         <p className="text-xs text-nbx-text/55">
-          <strong>Wij sturen onze BM-ID in de welkomstmail.</strong> Jullie BM-admin
-          accepteert via Business Settings → Partners → Add Partner. Geen wachtwoord nodig.
+          Geen wachtwoord nodig: voeg ons toe als partner. Onze BM-ID staat in de
+          welkomstmail.
         </p>
+        <InfoDropdown title="Hoe voeg ik Nobox toe als partner?">
+          <ol className="list-decimal pl-4 space-y-1">
+            <li>Open Meta Business Suite → Instellingen → Bedrijf (Business Settings).</li>
+            <li>Ga naar Partners en klik &quot;Toevoegen&quot; (Add Partner).</li>
+            <li>Plak onze Business Manager-ID (die sturen we in de welkomstmail).</li>
+            <li>
+              Geef de gevraagde toegang voor advertenties en pagina&apos;s. Geen wachtwoord
+              nodig.
+            </li>
+          </ol>
+        </InfoDropdown>
         <FieldYesNo name="meta_business.has" label="Werken jullie met Meta Ads (Facebook/Instagram)?" />
         {hasMeta === true && (
           <FieldText
@@ -704,10 +756,24 @@ function Section2Platforms() {
       <div className="space-y-3">
         <h3 className="text-lg">LinkedIn bedrijfspagina</h3>
         <p className="text-xs text-nbx-text/55">
-          <strong>Een huidige beheerder voegt <code className="bg-nbx-bg/60 px-1 rounded">marketing@noboxagency.com</code> toe</strong> als
-          Super admin in Page admin centre → Manage admins. Email hieronder = onze
-          verificatie.
+          Geen wachtwoord nodig: voeg ons toe als beheerder. De e-mail hieronder gebruiken
+          we ter verificatie.
         </p>
+        <InfoDropdown title="Hoe voeg ik ons toe als beheerder?">
+          <ol className="list-decimal pl-4 space-y-1">
+            <li>Open je LinkedIn-bedrijfspagina als super admin.</li>
+            <li>Ga naar Instellingen → Beheerders beheren (Manage admins).</li>
+            <li>
+              Voeg{" "}
+              <code className="bg-nbx-bg/60 px-1 rounded">marketing@noboxagency.com</code> toe
+              als Super admin.
+            </li>
+          </ol>
+          <p className="mt-2 text-nbx-text/55">
+            Lukt toevoegen via e-mail niet? Geef hieronder de e-mail van een beheerder op,
+            dan stemmen we het samen af.
+          </p>
+        </InfoDropdown>
         <FieldYesNo name="linkedin.has" label="Hebben jullie een LinkedIn bedrijfspagina?" />
         {hasLI === true && (
           <FieldText
@@ -721,9 +787,9 @@ function Section2Platforms() {
       <div className="space-y-3">
         <h3 className="text-lg">Instagram bedrijfsaccount</h3>
         <p className="text-xs text-nbx-text/55">
-          <strong>Wachtwoord nodig</strong> — Instagram heeft geen agency/collaborator-flow.
-          Login deel je straks veilig via de vault-link. Hier alleen handle of e-mail voor
-          referentie.
+          <strong>Wachtwoord nodig:</strong> Instagram heeft geen uitnodig-flow voor
+          bureaus. De login deel je straks veilig via onetimesecret (zie de volgende stap).
+          Hier alleen je handle of e-mail ter referentie.
         </p>
         <FieldYesNo name="instagram.has" label="Hebben jullie een Instagram zakelijk account?" />
         {hasIG === true && (
@@ -737,10 +803,30 @@ function Section2Platforms() {
       <div className="space-y-3">
         <h3 className="text-lg">Website CMS</h3>
         <p className="text-xs text-nbx-text/55">
-          <strong>De CMS-admin voegt <code className="bg-nbx-bg/60 px-1 rounded">marketing@noboxagency.com</code> toe</strong> als
-          gebruiker (WordPress / Webflow / Squarespace collaborator-invite, Shopify staff
-          account). Email hieronder = waar de invite-link naartoe mag.
+          Meestal geen wachtwoord nodig: voeg ons toe als gebruiker. De e-mail hieronder is
+          waar de invite-link naartoe mag.
         </p>
+        <InfoDropdown title="Hoe voeg ik ons toe in mijn CMS?">
+          <ul className="list-disc pl-4 space-y-1">
+            <li>
+              <strong>WordPress:</strong> Beheer → Gebruikers → Nieuwe toevoegen, rol
+              Beheerder, e-mail{" "}
+              <code className="bg-nbx-bg/60 px-1 rounded">marketing@noboxagency.com</code>.
+            </li>
+            <li>
+              <strong>Webflow / Squarespace:</strong> nodig ons uit als collaborator via de
+              site-instellingen.
+            </li>
+            <li>
+              <strong>Shopify:</strong> Instellingen → Gebruikers en machtigingen →
+              Personeel toevoegen.
+            </li>
+          </ul>
+          <p className="mt-2 text-nbx-text/55">
+            Geen invite-optie in jouw CMS? Dan deel je de login via onetimesecret (zie de
+            volgende stap).
+          </p>
+        </InfoDropdown>
         <FieldSelect
           name="website_cms.cms_type"
           label="Welk CMS?"
@@ -756,7 +842,7 @@ function Section2Platforms() {
         <div className="grid sm:grid-cols-2 gap-5">
           <FieldText
             name="website_cms.cms_other"
-            label="Andere — welke?"
+            label="Andere, welke?"
             placeholder="(alleen invullen bij 'Anders')"
           />
           <FieldText
@@ -794,22 +880,27 @@ function Section3Vault() {
         <div>
           <h3 className="text-base sm:text-lg mb-2">Hier hoef je niks in te vullen.</h3>
           <p className="text-sm text-nbx-text/75 leading-relaxed mb-3">
-            Voor wachtwoorden en logins gebruiken we een beveiligde vault — dit
-            formulier is niet de plek om die te delen. Je krijgt de vault-link in onze
-            welkomstmail nadat je het formulier verstuurt.
+            De meeste toegang regel je zonder wachtwoord: je voegt{" "}
+            <code className="bg-nbx-bg/60 px-1 rounded">marketing@noboxagency.com</code> toe
+            als gebruiker bij je platforms (dat deed je in de vorige stap).
           </p>
-          <p className="text-sm">
-            <a
-              href={VAULT_URL}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-nbx-text text-nbx-green rounded-full hover:opacity-90 transition-opacity font-medium"
-            >
-              Open de vault →
-            </a>
+          <p className="text-sm text-nbx-text/75 leading-relaxed mb-4">
+            Heeft een account toch een wachtwoord nodig (zoals Instagram, of een CMS zonder
+            invite-optie)? Dan deel je de login veilig via onetimesecret: plak je
+            inloggegevens, klik op &quot;Create Link&quot; en stuur ons de eenmalige link die
+            je krijgt. De pagina wijst zich vanzelf. <strong>Je krijgt dus geen link van
+            ons, je maakt &apos;m zelf.</strong>
+          </p>
+          <ArrowSlideLink href={ONETIMESECRET_URL} external variant="green">
+            Open eu.onetimesecret.com
+          </ArrowSlideLink>
+          <p className="text-xs text-nbx-text/55 mt-3">
+            <b>Tip:</b> bewaar de inloggegevens zelf ook even ergens (bijv. je
+            wachtwoordmanager). De link werkt eenmalig, dus als het openen misgaat kun je zo
+            opnieuw een link maken.
           </p>
           <p className="text-xs text-nbx-text/55 mt-3">
-            <b>Stuur nooit wachtwoorden via dit form of per mail.</b>
+            <b>Stuur nooit wachtwoorden via dit formulier of per gewone mail.</b>
           </p>
         </div>
       </div>

@@ -204,5 +204,10 @@ export const sectionTitles = [
   "Praktisch",
 ] as const;
 
-// Centrale vault-URL — Bitwarden Send link (Sebas regelt, voor nu placeholder).
-export const VAULT_URL = "https://noboxagency.com/vault";
+// Centrale links voor de credential-uitleg (sectie 3 + welkomstmail).
+// onetimesecret EU-regio: de pagina spreekt voor zich, dit is de primaire link.
+export const ONETIMESECRET_URL = "https://eu.onetimesecret.com";
+// Optionele Tango-walkthrough (screenshots). Nu NIET in de UI getoond: de
+// onetimesecret-pagina is self-explanatory en de screenshots kunnen verouderen.
+export const TANGO_GUIDE_URL =
+  "https://app.tango.us/app/workflow/Create-Secret-Link-for-Europe-0c7898da693e47e6b6b8e98e454abc64";
