@@ -89,7 +89,7 @@ export const schema = z.object({
   }),
   overige_platforms: z.string().trim().optional(),
 
-  // Sectie 3 — Vault info-only (geen velden)
+  // Sectie 3 — Wachtwoorden & logins (info-only, geen velden)
 
   // Sectie 4 — Branding & content
   logo: fileUpload,
@@ -97,17 +97,26 @@ export const schema = z.object({
     notes: z.string().trim().optional(),
   }),
   pitch_deck: fileUpload,
+  // Extra logo's / brand-assets (meerdere bestanden) -> komen in extra_documents
+  brand_assets: z.array(fileUpload).optional(),
   brand_color_hex: optionalHex,
+  brand_secondary_hex: optionalHex,
+  brand_accent_hex: optionalHex,
   foto_video_drive_link: optionalUrl,
   klantcases_text: z.string().trim().optional(),
+  klantcases_document: fileUpload,
   contentstrategie_text: z.string().trim().optional(),
-
-  // Sectie 5 — Praktisch
-  voorkeur_vergader_tijd: z.enum(["ochtend", "middag", "avond", "flexibel"]),
-  bijzonderheden: z.string().trim().optional(),
+  contentstrategie_document: fileUpload,
 });
 
 export type FormData = z.infer<typeof schema>;
+
+const emptyFile = {
+  document_filename: "",
+  document_data: "",
+  document_size: 0,
+  document_mime: "",
+};
 
 export const defaultValues: FormData = {
   bedrijfsnaam: "",
@@ -124,31 +133,18 @@ export const defaultValues: FormData = {
   instagram: { has: false, owner_email_or_handle: "" },
   website_cms: { cms_type: "", cms_other: "", owner_email: "" },
   overige_platforms: "",
-  logo: {
-    document_filename: "",
-    document_data: "",
-    document_size: 0,
-    document_mime: "",
-  },
-  branding: {
-    document_filename: "",
-    document_data: "",
-    document_size: 0,
-    document_mime: "",
-    notes: "",
-  },
-  pitch_deck: {
-    document_filename: "",
-    document_data: "",
-    document_size: 0,
-    document_mime: "",
-  },
+  logo: { ...emptyFile },
+  branding: { ...emptyFile, notes: "" },
+  pitch_deck: { ...emptyFile },
+  brand_assets: [],
   brand_color_hex: "",
+  brand_secondary_hex: "",
+  brand_accent_hex: "",
   foto_video_drive_link: "",
   klantcases_text: "",
+  klantcases_document: { ...emptyFile },
   contentstrategie_text: "",
-  voorkeur_vergader_tijd: "flexibel",
-  bijzonderheden: "",
+  contentstrategie_document: { ...emptyFile },
 };
 
 export const sectionFieldsByStep: ReadonlyArray<ReadonlyArray<string>> = [
@@ -176,9 +172,9 @@ export const sectionFieldsByStep: ReadonlyArray<ReadonlyArray<string>> = [
     "website_cms.owner_email",
     "overige_platforms",
   ],
-  // 2 — Vault info-block (no fields)
+  // 2 — Wachtwoorden & logins (info-block, no fields)
   [],
-  // 3 — Branding & content
+  // 3 — Branding & content (laatste stap)
   [
     "logo.document_filename",
     "logo.document_data",
@@ -188,12 +184,16 @@ export const sectionFieldsByStep: ReadonlyArray<ReadonlyArray<string>> = [
     "pitch_deck.document_filename",
     "pitch_deck.document_data",
     "brand_color_hex",
+    "brand_secondary_hex",
+    "brand_accent_hex",
     "foto_video_drive_link",
     "klantcases_text",
+    "klantcases_document.document_filename",
     "contentstrategie_text",
+    "contentstrategie_document.document_filename",
   ],
-  // 4 — Praktisch
-  ["voorkeur_vergader_tijd", "bijzonderheden"],
+  // 4 — Controleren & verzenden (geen validatie-velden)
+  [],
 ];
 
 export const sectionTitles = [
@@ -201,12 +201,14 @@ export const sectionTitles = [
   "Platform-toegangen",
   "Wachtwoorden & logins",
   "Branding & content",
-  "Praktisch",
+  "Controleren",
 ] as const;
 
 // Centrale links voor de credential-uitleg (sectie 3 + welkomstmail).
 // onetimesecret EU-regio: de pagina spreekt voor zich, dit is de primaire link.
 export const ONETIMESECRET_URL = "https://eu.onetimesecret.com";
+// Adres dat de klant moet toevoegen voor gedelegeerde toegang.
+export const MARKETING_EMAIL = "marketing@noboxagency.com";
 // Optionele Tango-walkthrough (screenshots). Nu NIET in de UI getoond: de
 // onetimesecret-pagina is self-explanatory en de screenshots kunnen verouderen.
 export const TANGO_GUIDE_URL =

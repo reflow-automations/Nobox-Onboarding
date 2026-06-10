@@ -97,8 +97,6 @@ export async function POST(req: Request) {
     foto_video_drive_link: data.foto_video_drive_link ?? null,
     klantcases_text: data.klantcases_text || null,
     contentstrategie_text: data.contentstrategie_text || null,
-    voorkeur_vergader_tijd: data.voorkeur_vergader_tijd,
-    bijzonderheden: data.bijzonderheden || null,
     raw_payload: data as unknown as Json,
   };
   const { data: intake, error: insertError } = await supabase
@@ -167,6 +165,77 @@ export async function POST(req: Request) {
         payload: { error: String(e) },
       });
     }
+  }
+
+  // 2b. Extra documenten (meerdere logo's/brand-assets + losse klantcases/contentstrategie-docs) -> extra_documents jsonb.
+  // Volledig defensief: faalt dit, dan blijven de kern-submit + n8n-trigger gewoon doorgaan.
+  try {
+    type Extra = {
+      document_filename?: string;
+      document_data?: string;
+      document_size?: number;
+      document_mime?: string;
+    };
+    const candidates: Array<{ file: Extra; note: string }> = [];
+    for (const a of data.brand_assets ?? []) {
+      if (a?.document_data && a.document_filename) candidates.push({ file: a, note: "Logo / brand-asset" });
+    }
+    if (data.klantcases_document?.document_data && data.klantcases_document.document_filename) {
+      candidates.push({ file: data.klantcases_document, note: "Klantcases" });
+    }
+    if (data.contentstrategie_document?.document_data && data.contentstrategie_document.document_filename) {
+      candidates.push({ file: data.contentstrategie_document, note: "Contentstrategie" });
+    }
+
+    const uploaded: Array<{ path: string; filename: string; mime: string | null; size: number; note: string }> = [];
+    for (let i = 0; i < candidates.length; i++) {
+      const { file, note } = candidates[i];
+      try {
+        const buffer = Buffer.from(file.document_data as string, "base64");
+        const safeFilename = (file.document_filename as string).replace(/[^\w.\-]/g, "_");
+        const path = `${intake.id}/extra-${i}-${safeFilename}`;
+        const { error: upErr } = await supabase.storage
+          .from("onboarding-docs")
+          .upload(path, buffer, {
+            contentType: file.document_mime || "application/octet-stream",
+            upsert: false,
+          });
+        if (upErr) {
+          await supabase.from("onboarding_intake_logs").insert({
+            intake_id: intake.id,
+            event: "extra_document_upload_failed",
+            payload: { error: upErr.message, note },
+          });
+        } else {
+          uploaded.push({
+            path,
+            filename: safeFilename,
+            mime: file.document_mime || null,
+            size: buffer.byteLength,
+            note,
+          });
+        }
+      } catch (e) {
+        await supabase.from("onboarding_intake_logs").insert({
+          intake_id: intake.id,
+          event: "extra_document_upload_error",
+          payload: { error: String(e) },
+        });
+      }
+    }
+
+    if (uploaded.length > 0) {
+      await supabase
+        .from("onboarding_intakes")
+        .update({ extra_documents: uploaded as unknown as Json } as never)
+        .eq("id", intake.id);
+    }
+  } catch (e) {
+    await supabase.from("onboarding_intake_logs").insert({
+      intake_id: intake.id,
+      event: "extra_documents_error",
+      payload: { error: String(e) },
+    });
   }
 
   // 3. Trigger n8n webhook
