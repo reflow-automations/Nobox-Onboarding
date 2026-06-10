@@ -91,6 +91,13 @@ export function OnboardingForm() {
   };
 
   const onSubmit = methods.handleSubmit(async (data) => {
+    // Harde gate: alleen echt verzenden vanaf de laatste (controle-)stap.
+    // Vangt o.a. een Enter-toets in een veld op, zodat de automation nooit
+    // start voordat de klant bewust op "Verstuur intake" heeft gedrukt.
+    if (step < STEPS - 1) {
+      await next();
+      return;
+    }
     setSubmitError(null);
     setSubmitting(true);
     try {
@@ -134,7 +141,21 @@ export function OnboardingForm() {
           </div>
         </div>
       )}
-      <form onSubmit={onSubmit} noValidate>
+      <form
+        onSubmit={onSubmit}
+        onKeyDown={(e) => {
+          // Enter in een gewoon veld mag het formulier niet verzenden; alleen op
+          // de controle-stap is verzenden toegestaan (via de knop).
+          if (
+            e.key === "Enter" &&
+            step < STEPS - 1 &&
+            (e.target as HTMLElement).tagName !== "TEXTAREA"
+          ) {
+            e.preventDefault();
+          }
+        }}
+        noValidate
+      >
         {/* Progress kicker + segmented bar */}
         <div className="mb-6 sm:mb-8">
           <div className="flex items-center justify-between gap-4 mb-3">
