@@ -81,6 +81,15 @@ export async function POST(req: Request) {
     bedrijfsnaam: data.bedrijfsnaam,
     bedrijfsemail: data.bedrijfsemail,
     website: data.website ?? null,
+    contactpersonen: data.contact_voornaam
+      ? [
+          {
+            voornaam: data.contact_voornaam,
+            achternaam: data.contact_achternaam || "",
+            email: data.contact_email || "",
+          },
+        ]
+      : null,
     factuuradres: data.factuuradres || null,
     factuur_email: data.factuur_email ?? null,
     concurrenten: data.concurrenten || null,
@@ -175,10 +184,13 @@ export async function POST(req: Request) {
       document_data?: string;
       document_size?: number;
       document_mime?: string;
+      note?: string;
     };
     const candidates: Array<{ file: Extra; note: string }> = [];
     for (const a of data.brand_assets ?? []) {
-      if (a?.document_data && a.document_filename) candidates.push({ file: a, note: "Logo / brand-asset" });
+      if (a?.document_data && a.document_filename) {
+        candidates.push({ file: a, note: a.note || "Brand-asset" });
+      }
     }
     if (data.klantcases_document?.document_data && data.klantcases_document.document_filename) {
       candidates.push({ file: data.klantcases_document, note: "Klantcases" });

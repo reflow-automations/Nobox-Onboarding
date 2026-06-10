@@ -50,6 +50,9 @@ export const schema = z.object({
   bedrijfsnaam: z.string().trim().min(2, "Bedrijfsnaam is verplicht"),
   bedrijfsemail: z.string().trim().email("Geen geldig e-mailadres"),
   website: optionalUrl,
+  contact_voornaam: z.string().trim().min(1, "Vul de voornaam van het aanspreekpunt in"),
+  contact_achternaam: z.string().trim().optional(),
+  contact_email: optionalEmail,
   factuuradres: z.string().trim().optional(),
   factuur_email: optionalEmail,
   concurrenten: z.string().trim().optional(),
@@ -83,6 +86,7 @@ export const schema = z.object({
     owner_email_or_handle: z.string().trim().optional(),
   }),
   website_cms: z.object({
+    has: z.boolean().optional(),
     cms_type: z.string().trim().optional(),
     cms_other: z.string().trim().optional(),
     owner_email: optionalEmail,
@@ -97,8 +101,8 @@ export const schema = z.object({
     notes: z.string().trim().optional(),
   }),
   pitch_deck: fileUpload,
-  // Extra logo's / brand-assets (meerdere bestanden) -> komen in extra_documents
-  brand_assets: z.array(fileUpload).optional(),
+  // Extra bestanden per upload-groep (meerdere mogelijk) -> komen in extra_documents
+  brand_assets: z.array(fileUpload.extend({ note: z.string().optional() })).optional(),
   brand_color_hex: optionalHex,
   brand_secondary_hex: optionalHex,
   brand_accent_hex: optionalHex,
@@ -122,6 +126,9 @@ export const defaultValues: FormData = {
   bedrijfsnaam: "",
   bedrijfsemail: "",
   website: "",
+  contact_voornaam: "",
+  contact_achternaam: "",
+  contact_email: "",
   factuuradres: "",
   factuur_email: "",
   concurrenten: "",
@@ -131,7 +138,7 @@ export const defaultValues: FormData = {
   meta_business: { has: false, business_manager_id: "" },
   linkedin: { has: false, owner_email: "" },
   instagram: { has: false, owner_email_or_handle: "" },
-  website_cms: { cms_type: "", cms_other: "", owner_email: "" },
+  website_cms: { has: false, cms_type: "", cms_other: "", owner_email: "" },
   overige_platforms: "",
   logo: { ...emptyFile },
   branding: { ...emptyFile, notes: "" },
@@ -149,7 +156,17 @@ export const defaultValues: FormData = {
 
 export const sectionFieldsByStep: ReadonlyArray<ReadonlyArray<string>> = [
   // 0 — Bedrijf & administratie
-  ["bedrijfsnaam", "bedrijfsemail", "website", "factuuradres", "factuur_email", "concurrenten"],
+  [
+    "bedrijfsnaam",
+    "bedrijfsemail",
+    "website",
+    "contact_voornaam",
+    "contact_achternaam",
+    "contact_email",
+    "factuuradres",
+    "factuur_email",
+    "concurrenten",
+  ],
   // 1 — Platform-toegangen
   [
     "google_ads.has",
@@ -167,6 +184,7 @@ export const sectionFieldsByStep: ReadonlyArray<ReadonlyArray<string>> = [
     "linkedin.owner_email",
     "instagram.has",
     "instagram.owner_email_or_handle",
+    "website_cms.has",
     "website_cms.cms_type",
     "website_cms.cms_other",
     "website_cms.owner_email",
@@ -209,6 +227,9 @@ export const sectionTitles = [
 export const ONETIMESECRET_URL = "https://eu.onetimesecret.com";
 // Adres dat de klant moet toevoegen voor gedelegeerde toegang.
 export const MARKETING_EMAIL = "marketing@noboxagency.com";
+// Nobox's eigen Meta Business Manager-ID, getoond in de Meta-uitleg.
+// Leeg = formulier verwijst naar de welkomstmail. TODO: invullen zodra bekend (Rogier/Sebas).
+export const NOBOX_BM_ID = "";
 // Optionele Tango-walkthrough (screenshots). Nu NIET in de UI getoond: de
 // onetimesecret-pagina is self-explanatory en de screenshots kunnen verouderen.
 export const TANGO_GUIDE_URL =
