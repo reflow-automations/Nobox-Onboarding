@@ -74,24 +74,30 @@ export const schema = z.object({
   concurrenten: z.string().trim().optional(),
 
   // Sectie 2 — Platform-toegangen
+  // toegevoegd = de klant vinkt aan dat hij de actie (ons uitnodigen/koppelen)
+  // heeft gedaan. Zelf-gerapporteerd; dashboard toont het als signaal.
   google_ads: z.object({
     has: z.boolean(),
     customer_id: z.string().trim().optional(),
     owner_email: optionalEmail,
     wil_opzetten: z.boolean().optional(),
+    toegevoegd: z.boolean().optional(),
   }),
   search_console: z.object({
     has: z.boolean(),
     owner_email: optionalEmail,
+    toegevoegd: z.boolean().optional(),
   }),
   ga4: z.object({
     has: z.boolean(),
     property_id: z.string().trim().optional(),
     owner_email: optionalEmail,
+    toegevoegd: z.boolean().optional(),
   }),
   meta_business: z.object({
     has: z.boolean(),
     business_manager_id: z.string().trim().optional(),
+    toegevoegd: z.boolean().optional(),
   }),
   linkedin: z.object({
     has: z.boolean(),
@@ -99,16 +105,19 @@ export const schema = z.object({
     // daarna voegt de klant een persoon (profiel) toe als beheerder.
     company_page: z.string().trim().optional(),
     owner_email: optionalEmail,
+    toegevoegd: z.boolean().optional(),
   }),
   instagram: z.object({
     has: z.boolean(),
     owner_email_or_handle: z.string().trim().optional(),
+    toegevoegd: z.boolean().optional(),
   }),
   website_cms: z.object({
     has: z.boolean().optional(),
     cms_type: z.string().trim().optional(),
     cms_other: z.string().trim().optional(),
     owner_email: optionalEmail,
+    toegevoegd: z.boolean().optional(),
   }),
   overige_platforms: z.string().trim().optional(),
   // Interne tools (ATS, CRM, Leadinfo, etc.) — helpt Nobox om toegang te plannen.
@@ -212,13 +221,13 @@ export const defaultValues: FormData = {
   factuuradres: "",
   factuur_email: "",
   concurrenten: "",
-  google_ads: { has: false, customer_id: "", owner_email: "", wil_opzetten: false },
-  search_console: { has: false, owner_email: "" },
-  ga4: { has: false, property_id: "", owner_email: "" },
-  meta_business: { has: false, business_manager_id: "" },
-  linkedin: { has: false, company_page: "", owner_email: "" },
-  instagram: { has: false, owner_email_or_handle: "" },
-  website_cms: { has: false, cms_type: "", cms_other: "", owner_email: "" },
+  google_ads: { has: false, customer_id: "", owner_email: "", wil_opzetten: false, toegevoegd: false },
+  search_console: { has: false, owner_email: "", toegevoegd: false },
+  ga4: { has: false, property_id: "", owner_email: "", toegevoegd: false },
+  meta_business: { has: false, business_manager_id: "", toegevoegd: false },
+  linkedin: { has: false, company_page: "", owner_email: "", toegevoegd: false },
+  instagram: { has: false, owner_email_or_handle: "", toegevoegd: false },
+  website_cms: { has: false, cms_type: "", cms_other: "", owner_email: "", toegevoegd: false },
   overige_platforms: "",
   internal_tools: "",
   logo: { ...emptyFile },

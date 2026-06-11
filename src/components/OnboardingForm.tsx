@@ -473,6 +473,24 @@ function FieldYesNo({ name, label }: { name: string; label: string }) {
   );
 }
 
+/** Zelf-gerapporteerd "geregeld"-vinkje per platform. Schrijft <platform>.toegevoegd
+ *  zodat het dashboard ziet of de klant de actie (uitnodigen/koppelen) heeft gedaan. */
+function PlatformDone({ name }: { name: string }) {
+  const { register } = useFormContext<FormData>();
+  return (
+    <label className="flex items-start gap-3 cursor-pointer select-none pt-1">
+      <input
+        type="checkbox"
+        {...register(name as never)}
+        className="mt-0.5 w-4 h-4 accent-current"
+      />
+      <span className="text-sm text-nbx-text/75 leading-snug">
+        Dit heb ik al geregeld
+      </span>
+    </label>
+  );
+}
+
 function FieldFile({
   namePrefix,
   label,
@@ -1249,6 +1267,7 @@ function Section2Platforms() {
                 hint="Daar komt het koppelverzoek binnen."
               />
             </div>
+            <PlatformDone name="google_ads.toegevoegd" />
           </div>
         )}
         {hasGAds === false && (
@@ -1276,6 +1295,7 @@ function Section2Platforms() {
                 <li>Kies rol &quot;Volledig&quot; (Full) en bevestig.</li>
               </ol>
             </InfoDropdown>
+            <PlatformDone name="search_console.toegevoegd" />
           </div>
         )}
       </div>
@@ -1311,6 +1331,7 @@ function Section2Platforms() {
               required
               hint="GA4 → Beheer → Property-instellingen."
             />
+            <PlatformDone name="ga4.toegevoegd" />
           </div>
         )}
       </div>
@@ -1344,6 +1365,7 @@ function Section2Platforms() {
               placeholder="1234567890"
               hint="Meta Business Suite → Instellingen → Bedrijfsinfo. Handig als wij het partnerverzoek vanuit onze kant willen starten."
             />
+            <PlatformDone name="meta_business.toegevoegd" />
           </div>
         )}
       </div>
@@ -1386,6 +1408,7 @@ function Section2Platforms() {
               placeholder="linkedin.com/company/acme"
               required
             />
+            <PlatformDone name="linkedin.toegevoegd" />
           </div>
         )}
       </div>
@@ -1406,6 +1429,7 @@ function Section2Platforms() {
               placeholder="@acmerecruitment"
               required
             />
+            <PlatformDone name="instagram.toegevoegd" />
           </div>
         )}
       </div>
@@ -1460,6 +1484,7 @@ function Section2Platforms() {
               label="Andere, welke?"
               placeholder="(alleen invullen bij 'Anders')"
             />
+            <PlatformDone name="website_cms.toegevoegd" />
           </div>
         )}
       </div>
