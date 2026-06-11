@@ -1477,8 +1477,8 @@ function Section2Platforms() {
               />
               <FieldEmail
                 name="website_cms.owner_email"
-                label="E-mail voor de invite"
-                hint="Naar dit adres mag de invite-link."
+                label="E-mail van de beheerder"
+                hint="Wie beheert de website? Dan weten we wie we kunnen bereiken als de toegang niet lukt."
               />
             </div>
           </div>
