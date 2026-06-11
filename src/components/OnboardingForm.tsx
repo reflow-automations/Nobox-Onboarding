@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, useFormContext, FormProvider } from "react-hook-form";
+import { useForm, useFormContext, useFieldArray, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   schema,
   defaultValues,
+  emptyContactpersoon,
   sectionFieldsByStep,
   sectionTitles,
   ONETIMESECRET_URL,
@@ -22,8 +23,27 @@ import {
   InfoDropdown,
 } from "./ui";
 
-const STORAGE_KEY = "nbx-onboarding-draft-v3";
+const STORAGE_KEY = "nbx-onboarding-draft-v4";
+// v3 had losse contact_voornaam/-achternaam/-email velden; v4 heeft contactpersonen[].
+const LEGACY_STORAGE_KEY = "nbx-onboarding-draft-v3";
 const STEPS = sectionTitles.length;
+
+/** Migreer een v3-draft (los contactveld) naar de v4-vorm (contactpersonen-array). */
+function migrateLegacyDraft(parsed: Record<string, unknown>): Record<string, unknown> {
+  const voornaam = typeof parsed.contact_voornaam === "string" ? parsed.contact_voornaam : "";
+  const achternaam = typeof parsed.contact_achternaam === "string" ? parsed.contact_achternaam : "";
+  const email = typeof parsed.contact_email === "string" ? parsed.contact_email : "";
+  const migrated: Record<string, unknown> = { ...parsed };
+  delete migrated.contact_voornaam;
+  delete migrated.contact_achternaam;
+  delete migrated.contact_email;
+  if (voornaam || achternaam || email) {
+    migrated.contactpersonen = [
+      { ...emptyContactpersoon, voornaam, achternaam, email },
+    ];
+  }
+  return migrated;
+}
 
 const sectionSubtitles = [
   "Even kennismaken: bedrijfsinfo + factuur.",
@@ -51,6 +71,13 @@ export function OnboardingForm() {
       if (raw) {
         const parsed = JSON.parse(raw);
         methods.reset({ ...defaultValues, ...parsed });
+      } else {
+        const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+        if (legacy) {
+          const migrated = migrateLegacyDraft(JSON.parse(legacy));
+          methods.reset({ ...defaultValues, ...migrated });
+          localStorage.removeItem(LEGACY_STORAGE_KEY);
+        }
       }
     } catch {
       /* ignore corrupt draft */
@@ -73,7 +100,9 @@ export function OnboardingForm() {
     const valid = await methods.trigger(fields);
     if (valid && step < STEPS - 1) {
       setStep((s) => s + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      // Direct bovenaan de nieuwe stap landen; geen langzame smooth-scroll
+      // over de hele pagina (ergernis uit de review-meeting 2026-06-11).
+      window.scrollTo(0, 0);
     } else if (!valid) {
       requestAnimationFrame(() => {
         document
@@ -86,7 +115,7 @@ export function OnboardingForm() {
   const prev = () => {
     if (step > 0) {
       setStep((s) => s - 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo(0, 0);
     }
   };
 
@@ -144,13 +173,11 @@ export function OnboardingForm() {
       <form
         onSubmit={onSubmit}
         onKeyDown={(e) => {
-          // Enter in een gewoon veld mag het formulier niet verzenden; alleen op
-          // de controle-stap is verzenden toegestaan (via de knop).
-          if (
-            e.key === "Enter" &&
-            step < STEPS - 1 &&
-            (e.target as HTMLElement).tagName !== "TEXTAREA"
-          ) {
+          // Enter in een veld mag het formulier NOOIT verzenden, ook niet op de
+          // controle-stap: verzenden kan alleen via een bewuste klik (of Enter)
+          // op de "Verstuur intake"-knop zelf. Textarea houdt Enter als newline.
+          const tag = (e.target as HTMLElement).tagName;
+          if (e.key === "Enter" && tag !== "TEXTAREA" && tag !== "BUTTON") {
             e.preventDefault();
           }
         }}
@@ -599,9 +626,9 @@ function getNestedError(errors: Record<string, unknown>, path: string): string |
 }
 
 // E-mailpaden die elders ingevuld kunnen zijn (voor snelle-invul-suggesties).
+// Contactpersonen-e-mails komen er dynamisch bij in FieldEmail.
 const EMAIL_SUGGESTION_PATHS = [
   "bedrijfsemail",
-  "contact_email",
   "factuur_email",
   "google_ads.owner_email",
   "search_console.owner_email",
@@ -635,14 +662,24 @@ function FieldEmail({
   const err = getNestedError(errors as Record<string, unknown>, name);
   const current = ((watch(name as never) as unknown as string) ?? "").trim();
 
+  const contactEmails = (
+    (watch("contactpersonen" as never) as unknown as Array<{ email?: string }>) ?? []
+  ).map((c, i) => ({ path: `contactpersonen.${i}.email`, value: (c?.email ?? "").trim() }));
+
   const suggestions: string[] = [];
   const seen = new Set<string>();
-  for (const p of EMAIL_SUGGESTION_PATHS) {
-    if (p === name) continue;
-    const v = ((watch(p as never) as unknown as string) ?? "").trim();
-    if (v && EMAIL_RE.test(v) && v !== current && !seen.has(v)) {
-      seen.add(v);
-      suggestions.push(v);
+  const candidates = [
+    ...EMAIL_SUGGESTION_PATHS.map((p) => ({
+      path: p,
+      value: ((watch(p as never) as unknown as string) ?? "").trim(),
+    })),
+    ...contactEmails,
+  ];
+  for (const { path, value } of candidates) {
+    if (path === name) continue;
+    if (value && EMAIL_RE.test(value) && value !== current && !seen.has(value)) {
+      seen.add(value);
+      suggestions.push(value);
     }
   }
 
@@ -952,30 +989,7 @@ function Section1Bedrijf() {
         autoComplete="url"
       />
       <div className="pt-4 border-t border-nbx-text/10">
-        <p className="nbx-field-label mb-3">Contactpersoon</p>
-        <div className="space-y-5">
-          <div className="grid sm:grid-cols-2 gap-5">
-            <FieldText
-              name="contact_voornaam"
-              label="Voornaam"
-              placeholder="Sanne"
-              required
-              autoComplete="given-name"
-            />
-            <FieldText
-              name="contact_achternaam"
-              label="Achternaam"
-              placeholder="de Vries"
-              autoComplete="family-name"
-            />
-          </div>
-          <FieldEmail
-            name="contact_email"
-            label="E-mail contactpersoon (optioneel)"
-            placeholder="sanne@acme.nl"
-            hint="Ons vaste aanspreekpunt. Mag hetzelfde zijn als het bedrijfsadres."
-          />
-        </div>
+        <ContactpersonenField />
       </div>
       <div className="pt-4 border-t border-nbx-text/10">
         <p className="nbx-field-label mb-3">Administratie</p>
@@ -1004,6 +1018,111 @@ function Section1Bedrijf() {
           hint="Plak de websites van je belangrijkste concurrenten, één URL per regel. Sebas heeft dit vaak al; alleen invullen als hij erom vraagt."
         />
       </div>
+    </div>
+  );
+}
+
+/**
+ * Repeatable contactpersonen-lijst. Wie hier "ClickUp-toegang" aan heeft staan,
+ * wordt door de automation als gast uitgenodigd in de gezamenlijke ClickUp-space.
+ */
+function ContactpersonenField() {
+  const { control, register, formState } = useFormContext<FormData>();
+  const { fields, append, remove } = useFieldArray({ control, name: "contactpersonen" });
+  const arrayError = (formState.errors as Record<string, { message?: string } | undefined>)
+    .contactpersonen?.message;
+
+  return (
+    <div>
+      <p className="nbx-field-label mb-1">Contactpersonen</p>
+      <p className="text-xs text-nbx-text/55 mb-4 max-w-lg">
+        Onze vaste aanspreekpunten. Iedereen met het vinkje{" "}
+        <strong>ClickUp-toegang</strong> krijgt automatisch een uitnodiging voor de
+        gezamenlijke ClickUp-omgeving die we voor jullie opzetten.
+      </p>
+      <div className="space-y-4">
+        {fields.map((field, i) => {
+          return (
+            <div
+              key={field.id}
+              className="rounded-2xl border border-nbx-text/10 bg-nbx-bg/40 p-4 sm:p-5"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[11px] uppercase tracking-kicker text-nbx-text/55">
+                  Persoon {i + 1}
+                </span>
+                {fields.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => remove(i)}
+                    className="text-xs text-nbx-text/40 hover:text-nbx-text underline"
+                  >
+                    Verwijderen
+                  </button>
+                )}
+              </div>
+              <div className="space-y-5">
+                <div className="grid sm:grid-cols-2 gap-5">
+                  <FieldText
+                    name={`contactpersonen.${i}.voornaam`}
+                    label="Voornaam"
+                    placeholder="Sanne"
+                    required
+                    autoComplete="given-name"
+                  />
+                  <FieldText
+                    name={`contactpersonen.${i}.achternaam`}
+                    label="Achternaam"
+                    placeholder="de Vries"
+                    autoComplete="family-name"
+                  />
+                </div>
+                <div className="grid sm:grid-cols-2 gap-5">
+                  <FieldEmail
+                    name={`contactpersonen.${i}.email`}
+                    label="E-mail"
+                    placeholder="sanne@acme.nl"
+                    required
+                  />
+                  <FieldText
+                    name={`contactpersonen.${i}.functie`}
+                    label="Functie"
+                    placeholder="Marketing manager"
+                    required
+                  />
+                </div>
+                <label className="flex items-start gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    {...register(`contactpersonen.${i}.clickup_toegang` as never)}
+                    className="mt-0.5 w-4 h-4 accent-current"
+                  />
+                  <span className="text-sm text-nbx-text/75 leading-snug">
+                    ClickUp-toegang: nodig deze persoon uit voor onze gezamenlijke
+                    projectomgeving
+                  </span>
+                </label>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <button
+        type="button"
+        onClick={() =>
+          append({
+            voornaam: "",
+            achternaam: "",
+            email: "",
+            functie: "",
+            clickup_toegang: true,
+          })
+        }
+        className="mt-4 nbx-check-pill"
+      >
+        + Contactpersoon toevoegen
+      </button>
+      {arrayError && <p className="nbx-error">{arrayError}</p>}
     </div>
   );
 }
@@ -1065,11 +1184,13 @@ function Section2Platforms() {
                 name="google_ads.customer_id"
                 label="Customer ID (10-cijferig)"
                 placeholder="123-456-7890"
+                required
                 hint="Rechtsboven in Google Ads, naast je accountnaam."
               />
               <FieldEmail
                 name="google_ads.owner_email"
                 label="E-mail accounteigenaar"
+                required
                 hint="Daar komt het koppelverzoek binnen."
               />
             </div>
@@ -1103,6 +1224,7 @@ function Section2Platforms() {
             <FieldEmail
               name="search_console.owner_email"
               label="E-mail van de beheerder"
+              required
               hint="Wie beheert dit account? Dan weten we wie we kunnen bereiken als de toegang niet lukt."
             />
           </div>
@@ -1137,11 +1259,13 @@ function Section2Platforms() {
                 name="ga4.property_id"
                 label="Property ID"
                 placeholder="123456789"
+                required
                 hint="GA4 → Beheer → Property-instellingen."
               />
               <FieldEmail
                 name="ga4.owner_email"
                 label="E-mail van de beheerder"
+                required
                 hint="Voor als er iets misgaat met de toegang."
               />
             </div>
@@ -1188,26 +1312,41 @@ function Section2Platforms() {
         {hasLI === true && (
           <div className="space-y-3 pt-1 animate-fade-up">
             <p className="text-xs text-nbx-text/55">
-              Geen wachtwoord nodig: voeg ons toe als beheerder.
+              Geen wachtwoord nodig: je voegt straks een Nobox-beheerder toe aan je pagina.
+              LinkedIn werkt met <strong>personen</strong> (profielen), niet met
+              e-mailadressen.
             </p>
-            <InfoDropdown title="Hoe voeg ik ons toe als beheerder?">
+            <InfoDropdown title="Hoe werkt dit precies?">
               <ol className="list-decimal pl-4 space-y-1">
-                <li>Open je LinkedIn-bedrijfspagina als super admin.</li>
-                <li>Ga naar Instellingen → Beheerders beheren (Manage admins).</li>
                 <li>
-                  Voeg <CopyableEmail /> toe als Super admin.
+                  Vul hieronder de naam of URL van jullie bedrijfspagina in. Een
+                  Nobox-beheerder gaat jullie pagina dan eerst <strong>volgen</strong>{" "}
+                  (alleen volgers kun je als beheerder toevoegen). Wie dat is, lees je in
+                  de welkomstmail.
+                </li>
+                <li>
+                  Zodra wij volgen: open je bedrijfspagina als super admin en ga naar
+                  Instellingen → Beheerders beheren (Manage admins).
+                </li>
+                <li>
+                  Klik &quot;Beheerder toevoegen&quot;, zoek de Nobox-persoon uit de
+                  welkomstmail op en geef die de rol Super admin.
                 </li>
               </ol>
-              <p className="mt-2 text-nbx-text/55">
-                Lukt toevoegen via e-mail niet? Geef hieronder de e-mail van een beheerder
-                op, dan stemmen we het samen af.
-              </p>
             </InfoDropdown>
-            <FieldEmail
-              name="linkedin.owner_email"
-              label="E-mail van een beheerder"
-              hint="Voor als er iets misgaat met de toegang."
-            />
+            <div className="grid sm:grid-cols-2 gap-5">
+              <FieldText
+                name="linkedin.company_page"
+                label="Naam of URL van jullie bedrijfspagina"
+                placeholder="linkedin.com/company/acme"
+                required
+              />
+              <FieldEmail
+                name="linkedin.owner_email"
+                label="E-mail van jullie pagina-beheerder (optioneel)"
+                hint="Voor als er iets misgaat met de toegang."
+              />
+            </div>
           </div>
         )}
       </div>
@@ -1226,6 +1365,7 @@ function Section2Platforms() {
               name="instagram.owner_email_or_handle"
               label="E-mailadres of @gebruikersnaam"
               placeholder="@acmerecruitment"
+              required
             />
           </div>
         )}
@@ -1265,6 +1405,7 @@ function Section2Platforms() {
             <FieldSelect
               name="website_cms.cms_type"
               label="Welk CMS?"
+              required
               options={[
                 { value: "WordPress", label: "WordPress" },
                 { value: "Squarespace", label: "Squarespace" },
@@ -1294,6 +1435,18 @@ function Section2Platforms() {
         label="Overige platformen? (optioneel)"
         placeholder="bv. TikTok Ads, Pinterest, etc."
       />
+
+      <div className="pt-2">
+        <FieldTextarea
+          name="internal_tools"
+          label="Interne tools (optioneel)"
+          placeholder={
+            "bv. ATS (Recruitee, Carerix, Bullhorn), CRM (HubSpot, Pipedrive), Leadinfo, e-mailmarketing (Mailchimp, ActiveCampaign), projectmanagement…"
+          }
+          rows={3}
+          hint="Welke systemen gebruiken jullie intern? Denk ook aan tools waar je niet direct aan denkt, zoals je ATS of Leadinfo. Dan weten wij waar we straks mogelijk toegang voor nodig hebben."
+        />
+      </div>
     </div>
   );
 }
@@ -1470,13 +1623,20 @@ function Section5Review() {
         ["E-mail bedrijf", v.bedrijfsemail || ""],
         ["Website", v.website || ""],
         [
-          "Contactpersoon",
-          [
-            [v.contact_voornaam, v.contact_achternaam].filter(Boolean).join(" "),
-            v.contact_email,
-          ]
+          "Contactpersonen",
+          (v.contactpersonen ?? [])
+            .map((c) =>
+              [
+                [c.voornaam, c.achternaam].filter(Boolean).join(" "),
+                c.functie,
+                c.email,
+                c.clickup_toegang ? "ClickUp ✓" : "",
+              ]
+                .filter(Boolean)
+                .join(" · ")
+            )
             .filter(Boolean)
-            .join(" · "),
+            .join("\n"),
         ],
         ["Factuuradres", v.factuuradres || ""],
         ["E-mail facturen", v.factuur_email || ""],
@@ -1500,7 +1660,12 @@ function Section5Review() {
           v.ga4?.has ? [v.ga4.property_id, v.ga4.owner_email].filter(Boolean).join(" · ") || "ja" : "",
         ],
         ["Meta Business", v.meta_business?.has ? v.meta_business.business_manager_id || "ja" : ""],
-        ["LinkedIn", v.linkedin?.has ? v.linkedin.owner_email || "ja" : ""],
+        [
+          "LinkedIn",
+          v.linkedin?.has
+            ? [v.linkedin.company_page, v.linkedin.owner_email].filter(Boolean).join(" · ") || "ja"
+            : "",
+        ],
         ["Instagram", v.instagram?.has ? v.instagram.owner_email_or_handle || "ja" : ""],
         [
           "Website",
@@ -1511,6 +1676,7 @@ function Section5Review() {
             : "",
         ],
         ["Overige platformen", v.overige_platforms || ""],
+        ["Interne tools", v.internal_tools || ""],
       ],
     },
     {

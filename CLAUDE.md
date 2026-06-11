@@ -18,8 +18,12 @@
 
 ### `../Nobox dashboard/` — sister-project, **toont onze data**
 - Pad: `D:\Reflow automations\Reflow ai coding folder\projects\Nobox dashboard\` (was `Nobox meta ads analyse` tot 2026-05-11)
-- Wat: Internal team-dashboard. Heeft straks een `/onboarding`-tab die rows uit `onboarding_intakes` toont
+- Repo/deploy: **eigen** GitHub `reflow-automations/Nobox-ads-dashboard` + **eigen** Vercel-project `nobox-dashboard`
+- Wat: Internal team-dashboard. Toont rows uit `onboarding_intakes` op `/admin/klanten` + `/admin/klanten/[id]` (Sebas bewerkt + vult aan)
 - **Bij rename/move/breaking-change DAAR**: lees deze CLAUDE.md daar voor cross-impact
+- **⚠️ Onze form-vragen ↔ hun dashboard moeten matchen.** Voeg/wijzig/verwijder je een veld in `src/lib/schema.ts`, dan is het pas "af" als ook `src/app/api/submit/route.ts` het naar een echte kolom schrijft (niet alleen `raw_payload`), de kolom bestaat, en het dashboard het toont. Volledige veld-mapping + sync-regel + bekende drift: **`../../wiki/Nobox onboarding data-contract.md`** ([[Nobox onboarding data-contract]])
+
+> **Waarom apart en niet één repo/app?** (besloten 2026-06-11) Bewust twee losse projecten. Wij (dit form) zijn **publiek** (klanten vullen in); het dashboard zit volledig achter een password-middleware. Eén gecombineerde deploy zou gaten in die gate vereisen = lekrisico op het interne dashboard. Plus verschillende stacks (wij Next 14 / React 18; dashboard Next 15 / React 19). Daarom: **twee repos, twee Vercel-projecten, één gedeelde Supabase**. De koppeling is de DATA die wij schrijven en zij lezen (`onboarding_intakes`, `onboarding_intake_logs`, bucket `onboarding-docs`), niet de code.
 
 ### Supabase project — `Orakel chat` (extern, gedeeld met andere Nobox-projecten)
 - Project ID: `djarvwzvbxlcnxkxczpc`
@@ -50,11 +54,14 @@
 
 ## Belangrijke bestanden
 
-- `frontend/.env.local` — Supabase service-role key + n8n webhook URL + token (NOOIT committen)
-- `frontend/src/app/api/submit/route.ts` — entry point, validate + write + trigger
-- `frontend/src/lib/schema.ts` — Zod schema = de waarheid over form-shape; wijzigt mee met DB schema
-- `frontend/src/lib/database.types.ts` — gegenereerde Supabase TS-types
-- `n8n/Nobox-Onboarding-v1.json` — workflow export (version-controlled bron)
+> Let op: de app staat in `src/` in de project-root (NIET in een `frontend/` submap — die structuur is verlaten; oude `launch.json` met `--prefix frontend` staat als `docs/_original-launch.json`).
+
+- `.env.local` — Supabase service-role key + n8n webhook URL + token (NOOIT committen)
+- `src/app/api/submit/route.ts` — entry point, validate + write + trigger
+- `src/lib/schema.ts` — Zod schema = de waarheid over form-shape; wijzigt mee met DB schema
+- `src/lib/database.types.ts` — gegenereerde Supabase TS-types
+- `src/lib/supabase/server.ts` — Supabase client (service-role, server-only)
+- `n8n/Nobox-Onboarding-v1.json` — workflow export (version-controlled bron; verplaatst 2026-06-11 vanuit verkeerde locatie in het dashboard-project)
 - `docs/spec.md` — originele meeting-spec
 - `docs/assumptions.md` — alle AI-gokken gelogd (Sebas/Melle valideren later)
 - `docs/intake-form-draft.md` — veldenlijst v1
@@ -71,8 +78,8 @@
 
 ## Onbekend / open
 
-- GitHub repo voor dit form-project: nog niet aangemaakt (TODO bij eerste Vercel-deploy)
-- Vercel deploy: nog niet gedaan (alleen lokaal getest)
+- ~~GitHub repo voor dit form-project: nog niet aangemaakt~~: bestaat → `reflow-automations/Nobox-Onboarding` (origin)
+- Vercel deploy: repo bestaat; lokaal staat hier geen `.vercel/project.json`, dus deploy-koppeling is op Vercel-account niveau (verifieer naam in Vercel-dashboard bij twijfel)
 - ~~Brand-doc Storage → Drive 02-Branding copy~~: geïmplementeerd (node `Sync uploads → Drive` kopieert logo/brand_document/pitch_deck naar de juiste subfolders)
 - ~~Mail-branch + ClickUp-branch in n8n~~: geïmplementeerd + live getest (2026-06-09). ClickUp kloont template-space `901511152414` per klant; welkomstmail-draft in Gmail. Zie wiki `Nobox onboarding flow.md`.
 - **n8n executions worden NIET bewaard op deze instance** → debug de flow via Supabase `onboarding_intake_logs` (events: `drive_created`/`clickup_created`/`mails_sent`/`*_failed`), niet via de executions-API.

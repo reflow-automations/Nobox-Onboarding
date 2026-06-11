@@ -1,10 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { KickerDot } from "@/components/ui";
+import { Confetti } from "@/components/Confetti";
 
 export default function SuccessPage() {
   return (
     <main className="mx-auto max-w-form px-4 sm:px-6 py-8 sm:py-16 lg:py-20">
+      {/* Feestmoment (meeting 2026-06-11). TODO: Nobox-GIF van Sebas hier later bij. */}
+      <Confetti />
       <header className="flex items-center justify-between mb-16 sm:mb-24 animate-fade-in">
         <Image
           src="/nobox-logo.png"

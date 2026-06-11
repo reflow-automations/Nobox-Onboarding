@@ -81,15 +81,18 @@ export async function POST(req: Request) {
     bedrijfsnaam: data.bedrijfsnaam,
     bedrijfsemail: data.bedrijfsemail,
     website: data.website ?? null,
-    contactpersonen: data.contact_voornaam
-      ? [
-          {
-            voornaam: data.contact_voornaam,
-            achternaam: data.contact_achternaam || "",
-            email: data.contact_email || "",
-          },
-        ]
-      : null,
+    // Zelfde shape als het dashboard (ContactsEditor) gebruikt; clickup_toegang
+    // bepaalt wie n8n als gast uitnodigt in de ClickUp-space.
+    contactpersonen:
+      data.contactpersonen && data.contactpersonen.length > 0
+        ? data.contactpersonen.map((c) => ({
+            voornaam: c.voornaam,
+            achternaam: c.achternaam || "",
+            email: c.email,
+            functie: c.functie,
+            clickup_toegang: c.clickup_toegang === true,
+          }))
+        : null,
     factuuradres: data.factuuradres || null,
     factuur_email: data.factuur_email ?? null,
     concurrenten: data.concurrenten || null,
@@ -101,6 +104,7 @@ export async function POST(req: Request) {
     instagram: data.instagram,
     website_cms: data.website_cms,
     overige_platforms: data.overige_platforms || null,
+    internal_tools: data.internal_tools || null,
     brand_notes: data.branding?.notes || null,
     brand_color_hex: data.brand_color_hex || null,
     foto_video_drive_link: data.foto_video_drive_link ?? null,
