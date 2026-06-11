@@ -1276,12 +1276,6 @@ function Section2Platforms() {
                 <li>Kies rol &quot;Volledig&quot; (Full) en bevestig.</li>
               </ol>
             </InfoDropdown>
-            <FieldEmail
-              name="search_console.owner_email"
-              label="E-mail van de beheerder"
-              required
-              hint="Wie beheert dit account? Dan weten we wie we kunnen bereiken als de toegang niet lukt."
-            />
           </div>
         )}
       </div>
@@ -1309,21 +1303,14 @@ function Section2Platforms() {
                 &quot;Property-instellingen&quot; (een nummer, bv. 123456789).
               </p>
             </InfoDropdown>
-            <div className="grid sm:grid-cols-2 gap-5">
-              <FieldText
-                name="ga4.property_id"
-                label="Property ID"
-                placeholder="123456789"
-                required
-                hint="GA4 → Beheer → Property-instellingen."
-              />
-              <FieldEmail
-                name="ga4.owner_email"
-                label="E-mail van de beheerder"
-                required
-                hint="Voor als er iets misgaat met de toegang."
-              />
-            </div>
+            {/* Alleen Property ID nodig; de klant voegt ons zelf toe als gebruiker. */}
+            <FieldText
+              name="ga4.property_id"
+              label="Property ID"
+              placeholder="123456789"
+              required
+              hint="GA4 → Beheer → Property-instellingen."
+            />
           </div>
         )}
       </div>
@@ -1389,19 +1376,15 @@ function Section2Platforms() {
                 </li>
               </ol>
             </InfoDropdown>
-            <div className="grid sm:grid-cols-2 gap-5">
-              <FieldText
-                name="linkedin.company_page"
-                label="Naam of URL van jullie bedrijfspagina"
-                placeholder="linkedin.com/company/acme"
-                required
-              />
-              <FieldEmail
-                name="linkedin.owner_email"
-                label="E-mail van jullie pagina-beheerder (optioneel)"
-                hint="Voor als er iets misgaat met de toegang."
-              />
-            </div>
+            {/* Geen e-mail nodig: LinkedIn kent geen invite-per-mail. Wij volgen
+                eerst de pagina, daarna voegt de klant ons als persoon toe. We
+                hebben enkel de naam/URL van de bedrijfspagina nodig. */}
+            <FieldText
+              name="linkedin.company_page"
+              label="Naam of URL van jullie bedrijfspagina"
+              placeholder="linkedin.com/company/acme"
+              required
+            />
           </div>
         )}
       </div>

@@ -154,23 +154,12 @@ export const schema = z.object({
       ["google_ads", "owner_email"],
       "E-mail van de accounteigenaar is verplicht"
     );
-    req(
-      v.search_console.has,
-      v.search_console.owner_email,
-      ["search_console", "owner_email"],
-      "E-mail van de beheerder is verplicht"
-    );
+    // Search Console: alleen toevoegen, we hebben verder niks van de klant nodig.
     req(
       v.ga4.has,
       v.ga4.property_id,
       ["ga4", "property_id"],
       "Property ID is verplicht als je GA4 hebt"
-    );
-    req(
-      v.ga4.has,
-      v.ga4.owner_email,
-      ["ga4", "owner_email"],
-      "E-mail van de beheerder is verplicht"
     );
     req(
       v.linkedin.has,
