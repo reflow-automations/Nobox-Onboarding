@@ -1361,18 +1361,19 @@ function Section2Platforms() {
             <InfoDropdown title="Hoe werkt dit precies?">
               <ol className="list-decimal pl-4 space-y-1">
                 <li>
-                  Vul hieronder de naam of URL van jullie bedrijfspagina in. Een
-                  Nobox-beheerder gaat jullie pagina dan eerst <strong>volgen</strong>{" "}
-                  (alleen volgers kun je als beheerder toevoegen). Wie dat is, lees je in
-                  de welkomstmail.
+                  Vul hieronder de naam of URL van jullie bedrijfspagina in.{" "}
+                  <strong>Na het versturen</strong> volgt een Nobox-collega (meestal
+                  Sebas) jullie pagina, want alleen volgers kun je als beheerder
+                  toevoegen.
                 </li>
                 <li>
-                  Zodra wij volgen: open je bedrijfspagina als super admin en ga naar
-                  Instellingen → Beheerders beheren (Manage admins).
+                  Je krijgt van ons bericht zodra we volgen, met de naam van de persoon
+                  die je toevoegt.
                 </li>
                 <li>
-                  Klik &quot;Beheerder toevoegen&quot;, zoek de Nobox-persoon uit de
-                  welkomstmail op en geef die de rol Super admin.
+                  Open je bedrijfspagina als super admin → Instellingen → Beheerders
+                  beheren (Manage admins) → &quot;Beheerder toevoegen&quot;, zoek die
+                  persoon op en geef de rol Super admin.
                 </li>
               </ol>
             </InfoDropdown>
