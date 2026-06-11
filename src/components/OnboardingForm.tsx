@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useFormContext, useFieldArray, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -58,6 +58,8 @@ export function OnboardingForm() {
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Ankerpunt: top van het echte formulier (voorbij de welkom-hero).
+  const formTopRef = useRef<HTMLDivElement>(null);
 
   const methods = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -95,14 +97,36 @@ export function OnboardingForm() {
     return () => sub.unsubscribe();
   }, [methods]);
 
+  // Bij stapwissel direct bij de eerste vraag landen i.p.v. bovenaan de pagina.
+  // Dit MOET na de re-render gebeuren (de welkom-hero op stap 1 is dan al uit de
+  // DOM), anders meet scrollIntoView de oude layout en land je verkeerd.
+  const didMount = useRef(false);
+  useEffect(() => {
+    if (!didMount.current) {
+      didMount.current = true;
+      return;
+    }
+    if (step === 0) {
+      // Terug naar stap 1: naar de top zodat de welkom-hero weer in beeld komt.
+      window.scrollTo(0, 0);
+      return;
+    }
+    // Na de paint scrollen (de stap-kaart heeft een fade-up-animatie; meten
+    // tijdens die reflow gaf een driftende eindpositie). Absolute offset i.p.v.
+    // scrollIntoView, zodat we elke stap op exact dezelfde hoogte landen.
+    requestAnimationFrame(() => {
+      const el = formTopRef.current;
+      if (!el) return;
+      const y = el.getBoundingClientRect().top + window.scrollY - 16;
+      window.scrollTo(0, Math.max(0, y));
+    });
+  }, [step]);
+
   const next = async () => {
     const fields = sectionFieldsByStep[step] as Parameters<typeof methods.trigger>[0];
     const valid = await methods.trigger(fields);
     if (valid && step < STEPS - 1) {
       setStep((s) => s + 1);
-      // Direct bovenaan de nieuwe stap landen; geen langzame smooth-scroll
-      // over de hele pagina (ergernis uit de review-meeting 2026-06-11).
-      window.scrollTo(0, 0);
     } else if (!valid) {
       requestAnimationFrame(() => {
         document
@@ -115,7 +139,6 @@ export function OnboardingForm() {
   const prev = () => {
     if (step > 0) {
       setStep((s) => s - 1);
-      window.scrollTo(0, 0);
     }
   };
 
@@ -183,8 +206,40 @@ export function OnboardingForm() {
         }}
         noValidate
       >
-        {/* Progress kicker + segmented bar */}
-        <div className="mb-6 sm:mb-8">
+        {/* Welkom-hero: alleen op de eerste stap. Daarna weg, zodat de klant bij
+            stapwissel direct bij de eerstvolgende vraag begint i.p.v. eerst langs
+            deze intro te scrollen (review-meeting 2026-06-11). */}
+        {step === 0 && (
+          <section className="mb-14 sm:mb-20">
+            <div
+              className="mb-6 sm:mb-8 animate-slide-right"
+              style={{ animationDelay: "0.05s" }}
+            >
+              <KickerDot>B2B Marketing · Recruitment</KickerDot>
+            </div>
+            <h1
+              className="text-[3.25rem] leading-[0.88] sm:text-7xl lg:text-8xl mb-8 animate-fade-up"
+              style={{ animationDelay: "0.15s" }}
+            >
+              Welkom.
+              <br />
+              <span className="text-nbx-text/55">Vijf minuten,</span>
+              <br />
+              alles staat klaar.
+            </h1>
+            <p
+              className="text-base sm:text-lg lg:text-xl max-w-xl text-nbx-text/70 leading-relaxed animate-fade-up"
+              style={{ animationDelay: "0.4s" }}
+            >
+              Vertel ons over jullie organisatie en doelen. Daarna regelen wij de
+              Drive-map, taken, toegangsverzoeken en de eerste mails, zonder dat
+              jullie iets twee keer hoeven typen.
+            </p>
+          </section>
+        )}
+
+        {/* Progress kicker + segmented bar (ankerpunt voor scroll bij stapwissel) */}
+        <div ref={formTopRef} className="mb-6 sm:mb-8 scroll-mt-6">
           <div className="flex items-center justify-between gap-4 mb-3">
             <KickerDot>
               Stap {stepLabel} — {sectionTitles[step]}
