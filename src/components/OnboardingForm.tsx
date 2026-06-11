@@ -1469,18 +1469,13 @@ function Section2Platforms() {
                 { value: "Anders", label: "Anders" },
               ]}
             />
-            <div className="grid sm:grid-cols-2 gap-5">
-              <FieldText
-                name="website_cms.cms_other"
-                label="Andere, welke?"
-                placeholder="(alleen invullen bij 'Anders')"
-              />
-              <FieldEmail
-                name="website_cms.owner_email"
-                label="E-mail van de beheerder"
-                hint="Wie beheert de website? Dan weten we wie we kunnen bereiken als de toegang niet lukt."
-              />
-            </div>
+            {/* Geen e-mailveld hier: de klant voegt ons (marketing@noboxagency.com)
+                zelf toe in hun CMS, dus een eigen e-mailadres heeft geen functie. */}
+            <FieldText
+              name="website_cms.cms_other"
+              label="Andere, welke?"
+              placeholder="(alleen invullen bij 'Anders')"
+            />
           </div>
         )}
       </div>
