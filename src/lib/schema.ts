@@ -43,6 +43,10 @@ const fileUpload = z.object({
   document_data: z.string().optional(),
   document_size: z.number().optional(),
   document_mime: z.string().optional(),
+  // Gezet door de browser na een directe upload naar Supabase Storage (lib/directUpload).
+  // Dan is document_data leeg: zo blijft de submit-body klein (Vercel-limiet 4,5 MB).
+  document_path: z.string().optional(),
+  document_upload_error: z.string().optional(),
 });
 
 // Contactpersonen: naam, e-mail en functie verplicht (afspraak meeting 2026-06-11).

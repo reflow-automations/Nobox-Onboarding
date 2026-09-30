@@ -15,6 +15,7 @@ import {
   NOBOX_BM_ID,
   type FormData,
 } from "@/lib/schema";
+import { uploadFilesDirect } from "@/lib/directUpload";
 import {
   KickerDot,
   ArrowSlideButton,
@@ -153,10 +154,12 @@ export function OnboardingForm() {
     setSubmitError(null);
     setSubmitting(true);
     try {
+      // Bestanden eerst direct naar Storage; anders wordt de body te groot (HTTP 413).
+      const payload = await uploadFilesDirect(data);
       const res = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       const json = await res.json().catch(() => ({}));
       if (res.ok && json?.reference_id) {

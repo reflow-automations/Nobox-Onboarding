@@ -38,6 +38,66 @@ const UPLOAD_FIELDS: UploadField[] = [
   },
 ];
 
+const BUCKET = "onboarding-docs";
+// Alleen paden die /api/upload-url zelf uitdeelt; geen verwijzingen naar andermans bestanden.
+const PENDING_PATH = /^pending\/[0-9a-f-]{36}\/[^/]+$/;
+
+type IncomingFile = {
+  document_filename?: string;
+  document_data?: string;
+  document_size?: number;
+  document_mime?: string;
+  document_path?: string;
+  document_upload_error?: string;
+};
+
+type PlacedFile = { path: string; filename: string; size: number; mime: string | null };
+
+/**
+ * Zet een bestand op `${intakeId}/${prefix}-${naam}`.
+ * Nieuw: de browser heeft het al in pending/ gezet (document_path) -> verplaatsen.
+ * Oud: base64 in document_data -> zelf uploaden (alleen nog voor kleine drafts).
+ * Gooit bij een fout; de aanroeper logt die.
+ */
+async function placeFile(
+  supabase: ReturnType<typeof createServerSupabase>,
+  intakeId: string,
+  file: IncomingFile,
+  prefix: string
+): Promise<PlacedFile | null> {
+  if (!file.document_filename) return null;
+  if (file.document_upload_error) throw new Error(`browser-upload: ${file.document_upload_error}`);
+  const safeFilename = file.document_filename.replace(/[^\w.\-]/g, "_");
+  const target = `${intakeId}/${prefix}-${safeFilename}`;
+  const mime = file.document_mime || null;
+
+  if (file.document_path) {
+    if (!PENDING_PATH.test(file.document_path)) {
+      throw new Error(`Ongeldig upload-pad: ${file.document_path}`);
+    }
+    const { error } = await supabase.storage.from(BUCKET).move(file.document_path, target);
+    if (error) {
+      // Bestand staat er wel, alleen niet in de intake-map. Verwijs naar het pending-pad.
+      await supabase.from("onboarding_intake_logs").insert({
+        intake_id: intakeId,
+        event: `${prefix}_move_failed`,
+        payload: { error: error.message, path: file.document_path },
+      });
+      return { path: file.document_path, filename: safeFilename, size: file.document_size ?? 0, mime };
+    }
+    return { path: target, filename: safeFilename, size: file.document_size ?? 0, mime };
+  }
+
+  if (!file.document_data) return null;
+  const buffer = Buffer.from(file.document_data, "base64");
+  const { error } = await supabase.storage.from(BUCKET).upload(target, buffer, {
+    contentType: mime || "application/octet-stream",
+    upsert: false,
+  });
+  if (error) throw new Error(`${error.message} (${target})`);
+  return { path: target, filename: safeFilename, size: buffer.byteLength, mime };
+}
+
 export async function POST(req: Request) {
   const webhookUrl = process.env.N8N_WEBHOOK_URL;
   const webhookToken = process.env.N8N_WEBHOOK_TOKEN;
@@ -126,56 +186,29 @@ export async function POST(req: Request) {
     );
   }
 
-  // 2. Upload files (logo + brand_document + pitch_deck) — all routed to Drive later by n8n
+  // 2. Bestanden (logo + brand_document + pitch_deck); n8n synct ze later naar Drive.
+  // De browser zet ze direct in Storage (pending/); hier verplaatsen we ze naar de intake-map.
   for (const u of UPLOAD_FIELDS) {
-    const upload = data[u.formField] as
-      | {
-          document_filename?: string;
-          document_data?: string;
-          document_size?: number;
-          document_mime?: string;
-        }
-      | undefined;
-
-    if (!upload?.document_data || !upload.document_filename || upload.document_data.length === 0) {
-      continue;
-    }
-
+    const upload = data[u.formField] as IncomingFile | undefined;
+    if (!upload?.document_filename) continue;
     try {
-      const buffer = Buffer.from(upload.document_data, "base64");
-      const safeFilename = upload.document_filename.replace(/[^\w.\-]/g, "_");
-      const path = `${intake.id}/${u.formField}-${safeFilename}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("onboarding-docs")
-        .upload(path, buffer, {
-          contentType: upload.document_mime || "application/octet-stream",
-          upsert: false,
-        });
-
-      if (uploadError) {
-        await supabase.from("onboarding_intake_logs").insert({
-          intake_id: intake.id,
-          event: `${u.formField}_upload_failed`,
-          payload: { error: uploadError.message, path },
-        });
-      } else {
-        const updatePayload = {
-          [u.pathField]: path,
-          [u.filenameField]: safeFilename,
-          [u.sizeField]: buffer.byteLength,
-          [u.mimeField]: upload.document_mime || null,
-        };
-        await supabase
-          .from("onboarding_intakes")
-          .update(updatePayload as never)
-          .eq("id", intake.id);
-      }
+      const placed = await placeFile(supabase, intake.id, upload, u.formField);
+      if (!placed) continue;
+      const updatePayload = {
+        [u.pathField]: placed.path,
+        [u.filenameField]: placed.filename,
+        [u.sizeField]: placed.size,
+        [u.mimeField]: placed.mime,
+      };
+      await supabase
+        .from("onboarding_intakes")
+        .update(updatePayload as never)
+        .eq("id", intake.id);
     } catch (e) {
       await supabase.from("onboarding_intake_logs").insert({
         intake_id: intake.id,
-        event: `${u.formField}_upload_error`,
-        payload: { error: String(e) },
+        event: `${u.formField}_upload_failed`,
+        payload: { error: String(e), filename: upload.document_filename },
       });
     }
   }
@@ -183,59 +216,28 @@ export async function POST(req: Request) {
   // 2b. Extra documenten (meerdere logo's/brand-assets + losse klantcases/contentstrategie-docs) -> extra_documents jsonb.
   // Volledig defensief: faalt dit, dan blijven de kern-submit + n8n-trigger gewoon doorgaan.
   try {
-    type Extra = {
-      document_filename?: string;
-      document_data?: string;
-      document_size?: number;
-      document_mime?: string;
-      note?: string;
-    };
-    const candidates: Array<{ file: Extra; note: string }> = [];
+    const candidates: Array<{ file: IncomingFile; note: string }> = [];
     for (const a of data.brand_assets ?? []) {
-      if (a?.document_data && a.document_filename) {
-        candidates.push({ file: a, note: a.note || "Brand-asset" });
-      }
+      if (a?.document_filename) candidates.push({ file: a, note: a.note || "Brand-asset" });
     }
-    if (data.klantcases_document?.document_data && data.klantcases_document.document_filename) {
+    if (data.klantcases_document?.document_filename) {
       candidates.push({ file: data.klantcases_document, note: "Klantcases" });
     }
-    if (data.contentstrategie_document?.document_data && data.contentstrategie_document.document_filename) {
+    if (data.contentstrategie_document?.document_filename) {
       candidates.push({ file: data.contentstrategie_document, note: "Contentstrategie" });
     }
 
-    const uploaded: Array<{ path: string; filename: string; mime: string | null; size: number; note: string }> = [];
+    const uploaded: Array<PlacedFile & { note: string }> = [];
     for (let i = 0; i < candidates.length; i++) {
       const { file, note } = candidates[i];
       try {
-        const buffer = Buffer.from(file.document_data as string, "base64");
-        const safeFilename = (file.document_filename as string).replace(/[^\w.\-]/g, "_");
-        const path = `${intake.id}/extra-${i}-${safeFilename}`;
-        const { error: upErr } = await supabase.storage
-          .from("onboarding-docs")
-          .upload(path, buffer, {
-            contentType: file.document_mime || "application/octet-stream",
-            upsert: false,
-          });
-        if (upErr) {
-          await supabase.from("onboarding_intake_logs").insert({
-            intake_id: intake.id,
-            event: "extra_document_upload_failed",
-            payload: { error: upErr.message, note },
-          });
-        } else {
-          uploaded.push({
-            path,
-            filename: safeFilename,
-            mime: file.document_mime || null,
-            size: buffer.byteLength,
-            note,
-          });
-        }
+        const placed = await placeFile(supabase, intake.id, file, `extra-${i}`);
+        if (placed) uploaded.push({ ...placed, note });
       } catch (e) {
         await supabase.from("onboarding_intake_logs").insert({
           intake_id: intake.id,
-          event: "extra_document_upload_error",
-          payload: { error: String(e) },
+          event: "extra_document_upload_failed",
+          payload: { error: String(e), note, filename: file.document_filename },
         });
       }
     }
