@@ -316,12 +316,15 @@ export function OnboardingForm() {
             Vorige
           </button>
 
+          {/* Aparte keys: anders hergebruikt React dezelfde <button> en wordt die nog
+              tijdens de klik op "Volgende" type=submit, waardoor de intake meteen
+              verstuurd werd en de controle-stap werd overgeslagen (gezien 2026-09-30). */}
           {step < STEPS - 1 ? (
-            <ArrowSlideButton onClick={next} variant="primary">
+            <ArrowSlideButton key="next" onClick={next} variant="primary">
               Volgende
             </ArrowSlideButton>
           ) : (
-            <ArrowSlideButton type="submit" disabled={submitting} variant="green">
+            <ArrowSlideButton key="submit" type="submit" disabled={submitting} variant="green">
               {submitting ? "Versturen…" : "Verstuur intake"}
             </ArrowSlideButton>
           )}
